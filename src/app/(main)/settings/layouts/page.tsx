@@ -51,16 +51,21 @@ export default function ManageLayoutsPage() {
 
   useEffect(() => {
     if (selectedLayout) {
-      const layoutCameras = new Set(selectedLayout.layout.map(item => item.i));
+      // Ensure layout is an array before proceeding
+      const savedLayoutItems = Array.isArray(selectedLayout.layout) ? selectedLayout.layout : [];
+      
+      const layoutCameras = new Set(savedLayoutItems.map(item => item.i));
       const newCameras = cameras.filter(cam => !layoutCameras.has(cam.id));
+      
       const newItems: Layout[] = newCameras.map((cam, index) => ({
         i: cam.id,
-        x: ((selectedLayout.layout.length + index) * 6) % 12,
-        y: Infinity,
+        x: ((savedLayoutItems.length + index) * 6) % 12,
+        y: Infinity, // This places new items at the bottom
         w: 6,
         h: 4,
       }));
-      setCurrentLayout([...selectedLayout.layout, ...newItems]);
+      
+      setCurrentLayout([...savedLayoutItems, ...newItems]);
       setLayoutName(selectedLayout.name);
     } else {
       setCurrentLayout([]);
@@ -115,10 +120,14 @@ export default function ManageLayoutsPage() {
   const handleSaveLayout = () => {
     if (!selectedLayout) return;
 
+    // Filter out layout items for cameras that no longer exist
+    const cameraIds = new Set(cameras.map(c => c.id));
+    const cleanedLayout = currentLayout.filter(item => cameraIds.has(item.i));
+
     const updatedLayout: NamedLayout = {
       ...selectedLayout,
       name: layoutName,
-      layout: currentLayout,
+      layout: cleanedLayout,
     };
     
     setLayouts(prev => prev.map(l => l.id === selectedLayout.id ? updatedLayout : l));
