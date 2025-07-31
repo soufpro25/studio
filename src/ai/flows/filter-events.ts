@@ -23,8 +23,7 @@ const FilterEventsOutputSchema = z.object({
   isRelevant: z
     .boolean()
     .describe(
-      'Whether the event is relevant and requires review (e.g., person approaching).
-      Irrelevant events include things like swaying trees.'
+      'Whether the event is relevant and requires review (e.g., person approaching). Irrelevant events include things like swaying trees.'
     ),
   reason: z.string().describe('The reason for the relevance determination.'),
 });
