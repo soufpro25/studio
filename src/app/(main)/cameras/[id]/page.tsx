@@ -9,16 +9,17 @@ import { Button } from '@/components/ui/button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Maximize, Video, Camera, Sun, Contrast, Wind, Snowflake } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, use } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { GridSelector } from '@/components/grid-selector';
 
 type VideoSource = 'demo' | 'live';
 
-export default function CameraDetailPage({ params }: { params: { id: string } }) {
+export default function CameraDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [cameras] = useAtom(camerasAtom);
-  const camera = cameras.find((c) => c.id === params.id);
+  const camera = cameras.find((c) => c.id === id);
   const [videoSource, setVideoSource] = useState<VideoSource>('demo');
   const [hasCameraPermission, setHasCameraPermission] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
