@@ -19,6 +19,7 @@ import { LayoutDashboard, Film, Settings, LogOut } from 'lucide-react';
 import Logo from '@/components/logo';
 import { Provider as JotaiProvider } from 'jotai';
 import { ThemeSwitcher } from '@/components/theme-switcher';
+import { cn } from '@/lib/utils';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -49,7 +50,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 >
                   <Link href={item.href}>
                     <item.icon />
-                    <span className="group-data-[collapsible=icon]:hidden">
+                    <span
+                      className={cn(
+                        "transition-opacity duration-200",
+                        "group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-ml-8"
+                      )}
+                    >
                       {item.label}
                     </span>
                   </Link>
@@ -61,7 +67,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <ThemeSwitcher />
             <Button variant="ghost" className="w-full justify-start gap-2">
               <LogOut />
-              <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+               <span
+                  className={cn(
+                    "transition-opacity duration-200",
+                    "group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-ml-8"
+                  )}
+                >
+                  Logout
+                </span>
             </Button>
           </SidebarFooter>
         </Sidebar>
