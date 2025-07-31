@@ -30,9 +30,9 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start gap-2">
+        <Button variant="ghost" className="w-full justify-start gap-2 p-2">
             <Avatar className="h-7 w-7 border-2 border-primary">
-                <AvatarImage src="https://placehold.co/100x100" alt="User" />
+                <AvatarImage src="https://placehold.co/100x100" alt="User" data-ai-hint="user avatar" />
                 <AvatarFallback>U</AvatarFallback>
             </Avatar>
             <div className={cn(
