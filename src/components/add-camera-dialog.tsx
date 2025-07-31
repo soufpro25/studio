@@ -21,8 +21,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Wifi, Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { Plus, Wifi, Loader2, Video } from 'lucide-react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState } from 'react';
@@ -30,22 +30,105 @@ import { useToast } from '@/hooks/use-toast';
 import { useAtom } from 'jotai';
 import { camerasAtom } from '@/lib/store';
 import type { Camera } from '@/lib/data';
+import { AspectRatio } from './ui/aspect-ratio';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Camera name is required'),
   location: z.string().min(1, 'Location is required'),
-  streamUrl: z.string().url('Must be a valid RTSP URL').startsWith('rtsp://'),
+  streamUrl: z.string().url('Must be a valid URL').startsWith('rtsp://', 'URL must start with rtsp://'),
 });
+
+function ManualAddForm({ onFormSubmit }: { onFormSubmit: (values: z.infer<typeof formSchema>) => void }) {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { name: '', location: '', streamUrl: 'rtsp://' },
+    mode: 'onChange'
+  });
+
+  const streamUrl = useWatch({ control: form.control, name: 'streamUrl' });
+  const isUrlValid = formSchema.shape.streamUrl.safeParse(streamUrl).success;
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-4 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className='space-y-4'>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Camera Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Front Door" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Entrance" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="streamUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stream URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="rtsp://192.168.1.100/stream" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className='space-y-2'>
+              <FormLabel>Camera Preview</FormLabel>
+              <AspectRatio ratio={16 / 9} className="bg-muted rounded-md overflow-hidden border">
+                {isUrlValid ? (
+                     <video
+                        src="https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4"
+                        className="h-full w-full object-cover"
+                        autoPlay
+                        muted
+                        playsInline
+                        loop
+                      />
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 p-4 text-center">
+                        <Video className="h-8 w-8" />
+                        <p className="text-sm">Enter a valid RTSP stream URL to see a preview.</p>
+                    </div>
+                )}
+              </AspectRatio>
+              <p className="text-xs text-muted-foreground text-center">Note: Preview shows a sample video for demonstration.</p>
+          </div>
+        </div>
+        
+        <DialogFooter className="pt-4">
+            <Button type="submit" disabled={!form.formState.isValid}>Add Camera</Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  )
+}
 
 export function AddCameraDialog() {
   const [open, setOpen] = useState(false);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const { toast } = useToast();
-  const [cameras, setCameras] = useAtom(camerasAtom);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { name: '', location: '', streamUrl: 'rtsp://' },
-  });
+  const [, setCameras] = useAtom(camerasAtom);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const newCamera: Camera = {
@@ -61,7 +144,6 @@ export function AddCameraDialog() {
       description: `The camera "${values.name}" has been added successfully.`,
     });
     setOpen(false);
-    form.reset();
   }
 
   function handleDiscover() {
@@ -77,7 +159,7 @@ export function AddCameraDialog() {
           Add Camera
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Add a New Camera</DialogTitle>
           <DialogDescription>
@@ -90,7 +172,7 @@ export function AddCameraDialog() {
             <TabsTrigger value="manual">Manual</TabsTrigger>
           </TabsList>
           <TabsContent value="discover" className="py-4">
-             <div className="flex flex-col items-center justify-center space-y-4 rounded-lg border-2 border-dashed p-8 text-center">
+             <div className="flex flex-col items-center justify-center space-y-4 rounded-lg border-2 border-dashed p-8 text-center min-h-[300px]">
                 <Wifi className="h-12 w-12 text-muted-foreground" />
                 <h3 className="text-lg font-semibold">Discover Cameras</h3>
                 <p className="text-sm text-muted-foreground">Find ONVIF-compatible cameras on your local network.</p>
@@ -103,55 +185,7 @@ export function AddCameraDialog() {
              </div>
           </TabsContent>
           <TabsContent value="manual">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Camera Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Front Door" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Location</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Entrance" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="streamUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stream URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="rtsp://192.168.1.100/stream" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter className="pt-4">
-                    <Button type="submit">Add Camera</Button>
-                </DialogFooter>
-              </form>
-            </Form>
+            <ManualAddForm onFormSubmit={onSubmit} />
           </TabsContent>
         </Tabs>
       </DialogContent>
