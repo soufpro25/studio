@@ -15,9 +15,10 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Film, Settings, Puzzle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Film, Settings, LogOut } from 'lucide-react';
 import Logo from '@/components/logo';
 import { Provider as JotaiProvider } from 'jotai';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -26,7 +27,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/recordings', label: 'Recordings', icon: Film },
     { href: '/settings', label: 'Settings', icon: Settings },
-    { href: '/plugins', label: 'Plugins', icon: Puzzle },
   ];
 
   return (
@@ -55,7 +55,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
-          <SidebarFooter>
+          <SidebarFooter className='flex-col items-stretch gap-4'>
+            <ThemeSwitcher />
             <Button variant="ghost" className="w-full justify-start gap-2">
               <LogOut />
               <span>Logout</span>
