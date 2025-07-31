@@ -20,6 +20,7 @@ import Logo from '@/components/logo';
 import { Provider as JotaiProvider } from 'jotai';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { cn } from '@/lib/utils';
+import { UserMenu } from '@/components/user-menu';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -65,17 +66,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </SidebarMenu>
           <SidebarFooter className="flex-col items-stretch gap-4">
             <ThemeSwitcher />
-            <Button variant="ghost" className="w-full justify-start gap-2">
-              <LogOut />
-               <span
-                  className={cn(
-                    "transition-opacity duration-200",
-                    "group-data-[state=collapsed]:opacity-0"
-                  )}
-                >
-                  Logout
-                </span>
-            </Button>
+            <UserMenu />
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>
