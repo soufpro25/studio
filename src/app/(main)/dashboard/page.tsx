@@ -17,8 +17,11 @@ export default function DashboardPage() {
   const [cameras] = useAtom(camerasAtom);
   const [layout, setLayout] = useAtom(layoutAtom);
 
+  // Ensure layout is an array before filtering
+  const safeLayout = Array.isArray(layout) ? layout : [];
+  
   // Filter out cameras that are not in the layout
-  const camerasInLayout = cameras.filter(cam => layout.some(l => l.i === cam.id));
+  const camerasInLayout = cameras.filter(cam => safeLayout.some(l => l.i === cam.id));
 
   return (
     <div className="flex flex-col gap-6">
@@ -29,7 +32,7 @@ export default function DashboardPage() {
        {cameras.length > 0 ? (
           <GridLayout
             className="layout"
-            layout={layout}
+            layout={safeLayout}
             cols={12}
             rowHeight={30}
             isDraggable={false}
