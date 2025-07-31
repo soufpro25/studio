@@ -1,6 +1,7 @@
 
 'use client';
 
+import Link from 'next/link';
 import { useAtom } from 'jotai';
 import { camerasAtom } from '@/lib/store';
 import {
@@ -13,8 +14,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MoreVertical, Trash2, LayoutGrid } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AddCameraDialog } from '@/components/add-camera-dialog';
 import {
   DropdownMenu,
@@ -36,6 +37,28 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">Manage your cameras and system configuration.</p>
       </header>
+
+      <Card>
+          <CardHeader>
+            <CardTitle>System</CardTitle>
+            <CardDescription>Manage general system settings and configurations.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div className="rounded-md border p-4 flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium">Dashboard Layout</h3>
+                  <p className="text-sm text-muted-foreground">Customize the grid layout for your camera feeds.</p>
+                </div>
+                 <Button asChild>
+                    <Link href="/settings/layout">
+                        <LayoutGrid className="mr-2 h-4 w-4" />
+                        Edit Layout
+                    </Link>
+                 </Button>
+              </div>
+          </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle>Your Cameras</CardTitle>
