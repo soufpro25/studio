@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { cameras } from '@/lib/data';
@@ -14,8 +15,8 @@ export default function DashboardPage() {
       </header>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {cameras.map((camera) => (
-          <Card key={camera.id} className="group overflow-hidden transition-all hover:shadow-lg hover:shadow-primary/10">
-            <Link href={`/cameras/${camera.id}`}>
+          <Link key={camera.id} href={`/cameras/${camera.id}`} className="group block overflow-hidden transition-all rounded-lg hover:shadow-lg hover:shadow-primary/10">
+            <Card className="h-full border-0 shadow-none group-hover:border-0">
               <CardHeader className="flex flex-row items-center justify-between p-4">
                 <CardTitle className="truncate text-base font-medium">{camera.name}</CardTitle>
                 <Badge variant={camera.status === 'Online' ? 'outline' : 'destructive'} className={camera.status === 'Online' ? 'border-green-400/50 text-green-400' : ''}>
@@ -29,12 +30,12 @@ export default function DashboardPage() {
                     alt={`Live feed from ${camera.name}`}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    data-ai-hint="security camera footage"
+                    data-ai-hint="security camera"
                   />
                 </AspectRatio>
               </CardContent>
-            </Link>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>
