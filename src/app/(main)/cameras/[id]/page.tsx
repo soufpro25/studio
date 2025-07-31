@@ -1,14 +1,53 @@
+
+'use client';
+
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import { cameras } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useEffect, useRef, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function CameraDetailPage({ params }: { params: { id: string } }) {
   const camera = cameras.find((c) => c.id === params.id);
+  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const getCameraPermission = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+         toast({
+          variant: 'destructive',
+          title: 'Unsupported Browser',
+          description: 'Your browser does not support camera access.',
+        });
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this app.',
+        });
+      }
+    };
+
+    getCameraPermission();
+  }, [toast]);
 
   if (!camera) {
     notFound();
@@ -24,18 +63,20 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
         <div className="lg:col-span-2">
           <Card className="overflow-hidden">
             <AspectRatio ratio={16 / 9} className="relative bg-muted">
-              <Image
-                src={camera.streamUrl.replace('rtsp://aegis.view/stream', 'https://placehold.co/1280x720/2c3e50/ffffff?text=Stream+from+')}
-                alt={`Live feed from ${camera.name}`}
-                fill
-                className="object-cover"
-                data-ai-hint="security camera view"
-              />
-              <Button size="icon" variant="ghost" className="absolute right-2 top-2 bg-black/20 hover:bg-black/50">
+               <video ref={videoRef} className="h-full w-full object-cover" autoPlay muted playsInline />
+               <Button size="icon" variant="ghost" className="absolute right-2 top-2 bg-black/20 hover:bg-black/50">
                 <Maximize className="h-5 w-5" />
               </Button>
             </AspectRatio>
           </Card>
+          {!hasCameraPermission && (
+             <Alert variant="destructive" className="mt-4">
+              <AlertTitle>Camera Access Required</AlertTitle>
+              <AlertDescription>
+                Please allow camera access in your browser to see the live feed.
+              </AlertDescription>
+            </Alert>
+          )}
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Event Timeline</CardTitle>
