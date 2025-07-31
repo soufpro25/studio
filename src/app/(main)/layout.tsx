@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Film, Settings, Puzzle, LogOut } from 'lucide-react';
 import Logo from '@/components/logo';
-import { JotaiProvider } from 'jotai';
+import { Provider as JotaiProvider } from 'jotai';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
