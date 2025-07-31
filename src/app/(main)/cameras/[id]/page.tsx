@@ -49,27 +49,25 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
       });
     }
   };
-
+  
+  // Effect for handling video source changes
   useEffect(() => {
-    if (videoSource === 'live' && hasCameraPermission === null) {
-      getCameraPermission();
-    }
-    
-    if (videoSource === 'live' && hasCameraPermission && streamRef.current && videoRef.current) {
-       videoRef.current.srcObject = streamRef.current;
-    }
-
-    return () => {
-      // Clean up stream when component unmounts or source changes
-      if (videoSource === 'demo' && streamRef.current) {
+    if (videoSource === 'live') {
+      if (hasCameraPermission === null) {
+        getCameraPermission();
+      } else if(hasCameraPermission && streamRef.current && videoRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+      }
+    } else { // videoSource === 'demo'
+      if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
-        if(videoRef.current) {
+      }
+       if(videoRef.current) {
           videoRef.current.srcObject = null;
         }
-      }
-    };
-  }, [videoSource, hasCameraPermission]);
+    }
+  }, [videoSource]);
   
   // Cleanup on unmount
   useEffect(() => {
@@ -100,6 +98,7 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
             <AspectRatio ratio={16 / 9} className="relative bg-muted">
                {videoSource === 'demo' ? (
                  <video 
+                   key="demo"
                    src="https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4" 
                    className="h-full w-full object-cover" 
                    autoPlay 
@@ -108,7 +107,7 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
                    loop 
                  />
                ) : (
-                 <video ref={videoRef} className="h-full w-full object-cover" autoPlay muted playsInline />
+                 <video key="live" ref={videoRef} className="h-full w-full object-cover" autoPlay muted playsInline />
                )}
                <div className="absolute right-2 top-2 flex flex-col gap-2">
                  <Button size="icon" variant="ghost" className="bg-black/20 hover:bg-black/50">
@@ -122,87 +121,56 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
                 Please allow camera access in your browser to see the live feed. You can still view the demo video.
-              </A<ctrl61>-in-from-right-2 data-[side=top]:-translate-y-1",
-        className
-      )}
-      position={position}
-      {...props}
-    >
-      <SelectScrollUpButton />
-      <SelectPrimitive.Viewport
-        className={cn(
-          "p-1",
-          position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
-        )}
-      >
-        {children}
-      </SelectPrimitive.Viewport>
-      <SelectScrollDownButton />
-    </SelectPrimitive.Content>
-  </SelectPrimitive.Portal>
-))
-SelectContent.displayName = SelectPrimitive.Content.displayName
-
-const SelectLabel = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Label>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
->(({ className, ...props }, ref) => (
-  <SelectPrimitive.Label
-    ref={ref}
-    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)}
-    {...props}
-  />
-))
-SelectLabel.displayName = SelectPrimitive.Label.displayName
-
-const SelectItem = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    )}
-    {...props}
-  >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
-      </SelectPrimitive.ItemIndicator>
-    </span>
-
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-  </SelectPrimitive.Item>
-))
-SelectItem.displayName = SelectPrimitive.Item.displayName
-
-const SelectSeparator = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Separator>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
->(({ className, ...props }, ref) => (
-  <SelectPrimitive.Separator
-    ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-muted", className)}
-    {...props}
-  />
-))
-SelectSeparator.displayName = SelectPrimitive.Separator.displayName
-
-export {
-  Select,
-  SelectGroup,
-  SelectValue,
-  SelectTrigger,
-  SelectContent,
-  SelectLabel,
-  SelectItem,
-  SelectSeparator,
-  SelectScrollUpButton,
-  SelectScrollDownButton,
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Controls</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="mb-2 font-medium">Video Source</h4>
+                 <div className="grid grid-cols-2 gap-2">
+                  <Button variant={videoSource === 'demo' ? 'secondary' : 'outline'} onClick={() => handleSourceChange('demo')}>
+                    <Video className="mr-2 h-4 w-4" />
+                    Demo
+                  </Button>
+                  <Button variant={videoSource === 'live' ? 'secondary' : 'outline'} onClick={() => handleSourceChange('live')}>
+                     <Camera className="mr-2 h-4 w-4" />
+                    Live
+                  </Button>
+                </div>
+              </div>
+              <Separator />
+               <div>
+                <h4 className="mb-2 font-medium">Pan & Tilt</h4>
+                <div className="grid grid-cols-3 gap-1">
+                  <div />
+                  <Button size="icon" variant="outline"><ArrowUp /></Button>
+                  <div />
+                  <Button size="icon" variant="outline"><ArrowLeft /></Button>
+                  <div />
+                  <Button size="icon" variant="outline"><ArrowRight /></Button>
+                   <div />
+                  <Button size="icon" variant="outline"><ArrowDown /></Button>
+                  <div />
+                </div>
+              </div>
+              <Separator />
+               <div>
+                <h4 className="mb-2 font-medium">Zoom</h4>
+                 <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline"><ZoomIn className="mr-2 h-4 w-4" /> Zoom In</Button>
+                  <Button variant="outline"><ZoomOut className="mr-2 h-4 w-4"/> Zoom Out</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 }
-```
-
-This should make it easier to test your application without needing a live camera feed every time. Let me know what you'd like to do next
