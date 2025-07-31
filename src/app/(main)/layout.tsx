@@ -53,7 +53,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                     <span
                       className={cn(
                         "transition-opacity duration-200",
-                        "group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-ml-8"
+                        "group-data-[state=collapsed]:opacity-0"
                       )}
                     >
                       {item.label}
@@ -70,7 +70,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                <span
                   className={cn(
                     "transition-opacity duration-200",
-                    "group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-ml-8"
+                    "group-data-[state=collapsed]:opacity-0"
                   )}
                 >
                   Logout
