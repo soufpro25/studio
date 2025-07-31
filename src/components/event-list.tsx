@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { motionEvents, type MotionEvent } from '@/lib/data';
 import {
   Table,
@@ -29,7 +29,10 @@ export function EventList() {
     if (!date?.from) return true;
     const eventDate = new Date(event.timestamp);
     if (date.to) {
-      return eventDate >= date.from && eventDate <= date.to;
+      // Set end of day for the 'to' date to include all events on that day
+      const toDate = new Date(date.to);
+      toDate.setHours(23, 59, 59, 999);
+      return eventDate >= date.from && eventDate <= toDate;
     }
     // If only 'from' is selected, filter for events on that day
     return eventDate >= date.from && eventDate < new Date(date.from.getTime() + 24 * 60 * 60 * 1000);
@@ -83,7 +86,7 @@ export function EventList() {
               <TableRow>
                 <TableHead className="w-[100px]">Camera</TableHead>
                 <TableHead>Event</TableHead>
-                <TableHead className="w-[150px]">Time</TableHead>
+                <TableHead className="w-[170px]">Time</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -106,8 +109,11 @@ export function EventList() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })}
+                    <TableCell className="text-muted-foreground">
+                      <div className="flex flex-col">
+                        <span>{format(new Date(event.timestamp), 'MMM d, yyyy')}</span>
+                        <span className="font-mono text-sm">{format(new Date(event.timestamp), 'HH:mm:ss')}</span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
