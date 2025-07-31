@@ -9,6 +9,14 @@ export interface Camera {
   streamUrl: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Admin' | 'Viewer';
+  avatarUrl: string;
+}
+
 export interface Plugin {
   id: string;
   name: string;
@@ -64,6 +72,30 @@ export const initialCameras: Camera[] = [
     streamUrl: 'rtsp://aegis.view/stream4',
   },
 ];
+
+export const initialUsers: User[] = [
+    {
+        id: 'user-001',
+        name: 'Admin',
+        email: 'admin@aegis.view',
+        role: 'Admin',
+        avatarUrl: 'https://placehold.co/100x100'
+    },
+    {
+        id: 'user-002',
+        name: 'John Doe',
+        email: 'john.doe@email.com',
+        role: 'Viewer',
+        avatarUrl: 'https://placehold.co/100x100'
+    },
+     {
+        id: 'user-003',
+        name: 'Jane Smith',
+        email: 'jane.smith@email.com',
+        role: 'Viewer',
+        avatarUrl: 'https://placehold.co/100x100'
+    }
+]
 
 export const motionEvents: AnalyzedEvent[] = [
   {

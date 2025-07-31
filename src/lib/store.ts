@@ -3,14 +3,17 @@
 
 import { atom } from 'jotai';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
-import { initialCameras } from './data';
-import type { Camera } from './data';
+import { initialCameras, initialUsers } from './data';
+import type { Camera, User } from './data';
 import type { Layout } from 'react-grid-layout';
 
 const storage = createJSONStorage(() => sessionStorage);
 
 // ATOM FOR CAMERAS
 export const camerasAtom = atom<Camera[]>(initialCameras);
+
+// ATOM FOR USERS
+export const usersAtom = atom<User[]>(initialUsers);
 
 
 // ATOMS FOR LAYOUTS

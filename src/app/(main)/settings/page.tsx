@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, Trash2, LayoutGrid } from 'lucide-react';
+import { MoreVertical, Trash2, LayoutGrid, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AddCameraDialog } from '@/components/add-camera-dialog';
 import {
@@ -43,7 +43,7 @@ export default function SettingsPage() {
             <CardTitle>System</CardTitle>
             <CardDescription>Manage general system settings and configurations.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-md border p-4 flex items-center justify-between">
                 <div>
                   <h3 className="font-medium">Dashboard Layouts</h3>
@@ -53,6 +53,18 @@ export default function SettingsPage() {
                     <Link href="/settings/layouts">
                         <LayoutGrid className="mr-2 h-4 w-4" />
                         Manage Layouts
+                    </Link>
+                 </Button>
+              </div>
+              <div className="rounded-md border p-4 flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium">User Management</h3>
+                  <p className="text-sm text-muted-foreground">Manage user accounts and their permissions.</p>
+                </div>
+                 <Button asChild>
+                    <Link href="/settings/users">
+                        <Users className="mr-2 h-4 w-4" />
+                        Manage Users
                     </Link>
                  </Button>
               </div>
