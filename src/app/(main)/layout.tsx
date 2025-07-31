@@ -49,17 +49,19 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 >
                   <Link href={item.href}>
                     <item.icon />
-                    <span>{item.label}</span>
+                    <span className="group-data-[collapsible=icon]:hidden">
+                      {item.label}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
-          <SidebarFooter className='flex-col items-stretch gap-4'>
+          <SidebarFooter className="flex-col items-stretch gap-4">
             <ThemeSwitcher />
             <Button variant="ghost" className="w-full justify-start gap-2">
               <LogOut />
-              <span>Logout</span>
+              <span className="group-data-[collapsible=icon]:hidden">Logout</span>
             </Button>
           </SidebarFooter>
         </Sidebar>
@@ -68,9 +70,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <SidebarTrigger />
             <h1 className="text-lg font-semibold">AegisView</h1>
           </header>
-          <main className="flex-1 p-4 md:p-6">
-            {children}
-          </main>
+          <main className="flex-1 p-4 md:p-6">{children}</main>
         </SidebarInset>
       </SidebarProvider>
     </JotaiProvider>

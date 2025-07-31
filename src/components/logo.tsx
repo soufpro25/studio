@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ShieldCheck } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
@@ -11,12 +11,12 @@ export default function Logo() {
   return (
     <div className="flex items-center gap-2.5">
       <div className="flex-shrink-0 rounded-lg bg-primary/10 p-2">
-        <ShieldCheck className="h-6 w-6 text-primary" />
+        <Bot className="h-6 w-6 text-primary" />
       </div>
       <h1 
         className={cn(
           "text-xl font-bold text-foreground transition-[margin,opacity] duration-300 ease-in-out",
-          state === 'collapsed' && "opacity-0 -ml-8"
+          "group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-ml-8"
           )}
       >
         AegisView
