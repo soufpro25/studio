@@ -15,22 +15,22 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Video, Settings, Plug, LogOut } from 'lucide-react';
+import { LayoutDashboard, Film, Settings, Puzzle, LogOut } from 'lucide-react';
 import Logo from '@/components/logo';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const menuItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-    { href: '/recordings', label: 'Recordings', icon: Video },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/recordings', label: 'Recordings', icon: Film },
     { href: '/settings', label: 'Settings', icon: Settings },
-    { href: '/plugins', label: 'Plugins', icon: Plug },
+    { href: '/plugins', label: 'Plugins', icon: Puzzle },
   ];
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar variant="floating" collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center justify-between">
             <Logo />
