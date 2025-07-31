@@ -15,69 +15,113 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 
 export function EventList() {
   const [events, setEvents] = useState<MotionEvent[]>(motionEvents);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [startTime, setStartTime] = useState('00:00');
+  const [endTime, setEndTime] = useState('23:59');
 
   const filteredEvents = events.filter((event) => {
-    if (!date?.from) return true;
     const eventDate = new Date(event.timestamp);
-    if (date.to) {
-      // Set end of day for the 'to' date to include all events on that day
-      const toDate = new Date(date.to);
-      toDate.setHours(23, 59, 59, 999);
-      return eventDate >= date.from && eventDate <= toDate;
+    
+    if (date?.from) {
+      const fromDate = new Date(date.from);
+      const [startHour, startMinute] = startTime.split(':').map(Number);
+      fromDate.setHours(startHour, startMinute, 0, 0);
+
+      let toDate: Date;
+      if (date.to) {
+        toDate = new Date(date.to);
+      } else {
+        // if no 'to' date, use the 'from' date
+        toDate = new Date(date.from);
+      }
+      const [endHour, endMinute] = endTime.split(':').map(Number);
+      toDate.setHours(endHour, endMinute, 59, 999);
+      
+      if (eventDate < fromDate || eventDate > toDate) {
+        return false;
+      }
     }
-    // If only 'from' is selected, filter for events on that day
-    return eventDate >= date.from && eventDate < new Date(date.from.getTime() + 24 * 60 * 60 * 1000);
+    
+    return true;
   });
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle>All Events</CardTitle>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id="date"
-              variant={'outline'}
-              className={cn(
-                'w-[300px] justify-start text-left font-normal',
-                !date && 'text-muted-foreground'
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date?.from ? (
-                date.to ? (
-                  <>
-                    {format(date.from, 'LLL dd, y')} -{' '}
-                    {format(date.to, 'LLL dd, y')}
-                  </>
-                ) : (
-                  format(date.from, 'LLL dd, y')
-                )
-              ) : (
-                <span>Pick a date range</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-        </Popover>
+        <div className="flex items-center gap-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={'outline'}
+                  className={cn(
+                    'w-[300px] justify-start text-left font-normal',
+                    !date && 'text-muted-foreground'
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, 'LLL dd, y')} -{' '}
+                        {format(date.to, 'LLL dd, y')}
+                      </>
+                    ) : (
+                      format(date.from, 'LLL dd, y')
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={setDate}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+             <div className="flex items-center gap-2">
+                <Label htmlFor="start-time" className="flex items-center gap-1 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    From
+                </Label>
+                <Input 
+                    id="start-time" 
+                    type="time" 
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="w-[120px]"
+                />
+            </div>
+            <div className="flex items-center gap-2">
+                <Label htmlFor="end-time" className="flex items-center gap-1 text-muted-foreground">
+                    To
+                </Label>
+                <Input 
+                    id="end-time" 
+                    type="time" 
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-[120px]"
+                />
+            </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
@@ -120,7 +164,7 @@ export function EventList() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={3} className="h-24 text-center">
-                    No events found for the selected date range.
+                    No events found for the selected date and time range.
                   </TableCell>
                 </TableRow>
               )}
