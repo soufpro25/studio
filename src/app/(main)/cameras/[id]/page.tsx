@@ -17,12 +17,26 @@ type VideoSource = 'demo' | 'live';
 export default function CameraDetailPage({ params }: { params: { id: string } }) {
   const camera = cameras.find((c) => c.id === params.id);
   const [videoSource, setVideoSource] = useState<VideoSource>('demo');
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
 
-  const getCameraPermission = async () => {
+  const stopStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if(videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const startLiveStream = async () => {
+    if (streamRef.current) {
+      stopStream();
+    }
+    
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       toast({
         variant: 'destructive',
@@ -30,8 +44,10 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
         description: 'Your browser does not support camera access.',
       });
       setHasCameraPermission(false);
+      setVideoSource('demo');
       return;
     }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       streamRef.current = stream;
@@ -47,43 +63,28 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
         title: 'Camera Access Denied',
         description: 'Please enable camera permissions in your browser settings to use the live feed.',
       });
+      setVideoSource('demo');
     }
   };
-  
-  // Effect for handling video source changes
+
   useEffect(() => {
     if (videoSource === 'live') {
-      if (hasCameraPermission === null) {
-        getCameraPermission();
-      } else if(hasCameraPermission && streamRef.current && videoRef.current) {
-        videoRef.current.srcObject = streamRef.current;
-      }
-    } else { // videoSource === 'demo'
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-       if(videoRef.current) {
-          videoRef.current.srcObject = null;
-        }
+      startLiveStream();
+    } else { // demo
+      stopStream();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoSource]);
-  
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    }
+      stopStream();
+    };
   }, []);
 
   if (!camera) {
     notFound();
-  }
-  
-  const handleSourceChange = (source: VideoSource) => {
-    setVideoSource(source);
   }
 
   return (
@@ -97,14 +98,14 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
           <Card className="overflow-hidden">
             <AspectRatio ratio={16 / 9} className="relative bg-muted">
                {videoSource === 'demo' ? (
-                 <video 
+                 <video
                    key="demo"
-                   src="https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4" 
-                   className="h-full w-full object-cover" 
-                   autoPlay 
-                   muted 
-                   playsInline 
-                   loop 
+                   src="https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4"
+                   className="h-full w-full object-cover"
+                   autoPlay
+                   muted
+                   playsInline
+                   loop
                  />
                ) : (
                  <video key="live" ref={videoRef} className="h-full w-full object-cover" autoPlay muted playsInline />
@@ -116,7 +117,7 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
                </div>
             </AspectRatio>
           </Card>
-          {videoSource === 'live' && hasCameraPermission === false && (
+          {videoSource === 'live' && !hasCameraPermission && (
              <Alert variant="destructive" className="mt-4">
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
@@ -134,11 +135,11 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
               <div>
                 <h4 className="mb-2 font-medium">Video Source</h4>
                  <div className="grid grid-cols-2 gap-2">
-                  <Button variant={videoSource === 'demo' ? 'secondary' : 'outline'} onClick={() => handleSourceChange('demo')}>
+                  <Button variant={videoSource === 'demo' ? 'secondary' : 'outline'} onClick={() => setVideoSource('demo')}>
                     <Video className="mr-2 h-4 w-4" />
                     Demo
                   </Button>
-                  <Button variant={videoSource === 'live' ? 'secondary' : 'outline'} onClick={() => handleSourceChange('live')}>
+                  <Button variant={videoSource === 'live' ? 'secondary' : 'outline'} onClick={() => setVideoSource('live')}>
                      <Camera className="mr-2 h-4 w-4" />
                     Live
                   </Button>

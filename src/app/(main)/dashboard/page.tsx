@@ -29,7 +29,7 @@ export default function DashboardPage() {
                     alt={`Live feed from ${camera.name}`}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    data-ai-hint="security camera"
+                    data-ai-hint="security camera footage"
                   />
                 </AspectRatio>
               </CardContent>

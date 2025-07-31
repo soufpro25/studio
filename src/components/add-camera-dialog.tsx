@@ -56,6 +56,7 @@ export function AddCameraDialog() {
 
   function handleDiscover() {
       setIsDiscovering(true);
+      // Simulating a network discovery that finds nothing
       setTimeout(() => setIsDiscovering(false), 2500);
   }
 
@@ -88,7 +89,7 @@ export function AddCameraDialog() {
                     {isDiscovering ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Searching...</> : 'Start Discovery'}
                 </Button>
                 {!isDiscovering && (
-                  <p className="text-xs text-muted-foreground pt-4">Simulated: No cameras found. Try manual entry.</p>
+                  <p className="text-xs text-muted-foreground pt-4">No cameras found. Try manual entry.</p>
                 )}
              </div>
           </TabsContent>
