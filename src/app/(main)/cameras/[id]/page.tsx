@@ -7,11 +7,12 @@ import { camerasAtom } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Maximize, Video, Camera } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Maximize, Video, Camera, Sun, Contrast, Wind, Snowflake } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useRef, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { GridSelector } from '@/components/grid-selector';
 
 type VideoSource = 'demo' | 'live';
 
@@ -19,7 +20,7 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
   const [cameras] = useAtom(camerasAtom);
   const camera = cameras.find((c) => c.id === params.id);
   const [videoSource, setVideoSource] = useState<VideoSource>('demo');
-  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
@@ -29,16 +30,13 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    if(videoRef.current) {
+    if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setHasCameraPermission(false);
   };
-
+  
   const startLiveStream = async () => {
-    if (streamRef.current) {
-      stopStream();
-    }
-    
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       toast({
         variant: 'destructive',
@@ -46,10 +44,10 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
         description: 'Your browser does not support camera access.',
       });
       setHasCameraPermission(false);
-      setVideoSource('demo');
+      setVideoSource('demo'); // Fallback to demo
       return;
     }
-
+  
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       streamRef.current = stream;
@@ -65,14 +63,14 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
         title: 'Camera Access Denied',
         description: 'Please enable camera permissions in your browser settings to use the live feed.',
       });
-      setVideoSource('demo');
+      setVideoSource('demo'); // Fallback to demo
     }
   };
 
   useEffect(() => {
     if (videoSource === 'live') {
       startLiveStream();
-    } else { // demo
+    } else {
       stopStream();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,6 +87,13 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
     notFound();
   }
 
+  const filters = [
+    { icon: Sun, label: 'Bright' },
+    { icon: Contrast, label: 'Contrast' },
+    { icon: Wind, label: 'Cool' },
+    { icon: Snowflake, label: 'Icy' }
+  ]
+
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -99,27 +104,24 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
         <div className="lg:col-span-2">
           <Card className="overflow-hidden">
             <AspectRatio ratio={16 / 9} className="relative bg-muted">
-               {videoSource === 'demo' ? (
-                 <video
-                   key="demo"
-                   src="https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4"
-                   className="h-full w-full object-cover"
-                   autoPlay
-                   muted
-                   playsInline
-                   loop
-                 />
-               ) : (
-                 <video key="live" ref={videoRef} className="h-full w-full object-cover" autoPlay muted playsInline />
-               )}
-               <div className="absolute right-2 top-2 flex flex-col gap-2">
-                 <Button size="icon" variant="ghost" className="bg-black/20 hover:bg-black/50">
-                   <Maximize className="h-5 w-5" />
-                 </Button>
-               </div>
+              <video
+                ref={videoRef}
+                key={videoSource}
+                src={videoSource === 'demo' ? "https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4" : undefined}
+                className="h-full w-full object-cover"
+                autoPlay
+                muted
+                playsInline
+                loop={videoSource === 'demo'}
+              />
+              <div className="absolute right-2 top-2 flex flex-col gap-2">
+                <Button size="icon" variant="ghost" className="bg-black/20 hover:bg-black/50">
+                  <Maximize className="h-5 w-5" />
+                </Button>
+              </div>
             </AspectRatio>
           </Card>
-          {videoSource === 'live' && !hasCameraPermission && (
+          {!hasCameraPermission && videoSource === 'live' && (
              <Alert variant="destructive" className="mt-4">
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
@@ -136,7 +138,7 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
             <CardContent className="space-y-4">
               <div>
                 <h4 className="mb-2 font-medium">Video Source</h4>
-                 <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button variant={videoSource === 'demo' ? 'secondary' : 'outline'} onClick={() => setVideoSource('demo')}>
                     <Video className="mr-2 h-4 w-4" />
                     Demo
@@ -150,7 +152,7 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
               <Separator />
                <div>
                 <h4 className="mb-2 font-medium">Pan & Tilt</h4>
-                <div className="grid grid-cols-3 gap-1">
+                <div className="grid grid-cols-3 justify-items-center gap-1">
                   <div />
                   <Button size="icon" variant="outline"><ArrowUp /></Button>
                   <div />
@@ -169,6 +171,18 @@ export default function CameraDetailPage({ params }: { params: { id: string } })
                   <Button variant="outline"><ZoomIn className="mr-2 h-4 w-4" /> Zoom In</Button>
                   <Button variant="outline"><ZoomOut className="mr-2 h-4 w-4"/> Zoom Out</Button>
                 </div>
+              </div>
+              <Separator />
+              <div>
+                <h4 className="mb-2 font-medium">Filters</h4>
+                <GridSelector rows={2} cols={2} onCellClick={(index) => toast({ title: `Filter "${filters[index].label}" selected` })}>
+                  {filters.map((filter, i) => (
+                    <div key={i} className="flex flex-col items-center justify-center gap-2">
+                       <filter.icon className="h-6 w-6" />
+                       <span className="text-xs">{filter.label}</span>
+                    </div>
+                  ))}
+                </GridSelector>
               </div>
             </CardContent>
           </Card>
