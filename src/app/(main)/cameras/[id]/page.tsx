@@ -2,7 +2,8 @@
 'use client';
 
 import { notFound } from 'next/navigation';
-import { cameras } from '@/lib/data';
+import { useAtom } from 'jotai';
+import { camerasAtom } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -15,6 +16,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 type VideoSource = 'demo' | 'live';
 
 export default function CameraDetailPage({ params }: { params: { id: string } }) {
+  const [cameras] = useAtom(camerasAtom);
   const camera = cameras.find((c) => c.id === params.id);
   const [videoSource, setVideoSource] = useState<VideoSource>('demo');
   const [hasCameraPermission, setHasCameraPermission] = useState(false);

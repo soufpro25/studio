@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -26,26 +27,35 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { cameras } from '@/lib/data';
+import { useAtom } from 'jotai';
+import { camerasAtom } from '@/lib/store';
+import type { Camera } from '@/lib/data';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Camera name is required'),
+  location: z.string().min(1, 'Location is required'),
   streamUrl: z.string().url('Must be a valid RTSP URL').startsWith('rtsp://'),
-  username: z.string().optional(),
-  password: z.string().optional(),
 });
 
 export function AddCameraDialog() {
   const [open, setOpen] = useState(false);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const { toast } = useToast();
+  const [cameras, setCameras] = useAtom(camerasAtom);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '', streamUrl: 'rtsp://', username: '', password: '' },
+    defaultValues: { name: '', location: '', streamUrl: 'rtsp://' },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    const newCamera: Camera = {
+        id: `cam-${Date.now()}`,
+        ...values,
+        status: Math.random() > 0.2 ? 'Online' : 'Offline',
+        thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff'
+    };
+    setCameras((prev) => [...prev, newCamera]);
+
     toast({
       title: 'Camera Added',
       description: `The camera "${values.name}" has been added successfully.`,
@@ -56,7 +66,6 @@ export function AddCameraDialog() {
 
   function handleDiscover() {
       setIsDiscovering(true);
-      // Simulating a network discovery that finds nothing
       setTimeout(() => setIsDiscovering(false), 2500);
   }
 
@@ -96,19 +105,34 @@ export function AddCameraDialog() {
           <TabsContent value="manual">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Camera Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Front Door" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Camera Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Front Door" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Entrance" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                </div>
                 <FormField
                   control={form.control}
                   name="streamUrl"
@@ -122,34 +146,7 @@ export function AddCameraDialog() {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                          <Input placeholder="(optional)" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="(optional)" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                
                 <DialogFooter className="pt-4">
                     <Button type="submit">Add Camera</Button>
                 </DialogFooter>

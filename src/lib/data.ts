@@ -1,4 +1,5 @@
 
+
 export interface Camera {
   id: string;
   name: string;
@@ -29,7 +30,7 @@ export interface MotionEvent {
 
 export type AnalyzedEvent = MotionEvent;
 
-export const cameras: Camera[] = [
+export const initialCameras: Camera[] = [
   {
     id: 'cam-001',
     name: 'Front Door',
@@ -61,22 +62,6 @@ export const cameras: Camera[] = [
     status: 'Online',
     thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
     streamUrl: 'rtsp://aegis.view/stream4',
-  },
-   {
-    id: 'cam-005',
-    name: 'Driveway',
-    location: 'Exterior',
-    status: 'Online',
-    thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: 'rtsp://aegis.view/stream5',
-  },
-  {
-    id: 'cam-006',
-    name: 'Kitchen',
-    location: 'Interior',
-    status: 'Online',
-    thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: 'rtsp://aegis.view/stream6',
   },
 ];
 

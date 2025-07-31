@@ -1,4 +1,8 @@
-import { cameras } from '@/lib/data';
+
+'use client';
+
+import { useAtom } from 'jotai';
+import { camerasAtom } from '@/lib/store';
 import {
   Table,
   TableBody,
@@ -9,11 +13,23 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AddCameraDialog } from '@/components/add-camera-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function SettingsPage() {
+  const [cameras, setCameras] = useAtom(camerasAtom);
+
+  const removeCamera = (id: string) => {
+    setCameras((prev) => prev.filter((c) => c.id !== id));
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -38,23 +54,41 @@ export default function SettingsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cameras.map((camera) => (
-                  <TableRow key={camera.id}>
-                    <TableCell className="font-medium">{camera.name}</TableCell>
-                    <TableCell>{camera.location}</TableCell>
-                    <TableCell>
-                       <Badge variant={camera.status === 'Online' ? 'outline' : 'destructive'} className={camera.status === 'Online' ? 'border-green-400/50 text-green-400' : ''}>
-                        {camera.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm text-muted-foreground">{camera.streamUrl}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                {cameras.length > 0 ? (
+                  cameras.map((camera) => (
+                    <TableRow key={camera.id}>
+                      <TableCell className="font-medium">{camera.name}</TableCell>
+                      <TableCell>{camera.location}</TableCell>
+                      <TableCell>
+                         <Badge variant={camera.status === 'Online' ? 'outline' : 'destructive'} className={camera.status === 'Online' ? 'border-green-400/50 text-green-400' : ''}>
+                          {camera.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm text-muted-foreground">{camera.streamUrl}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                           <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                             <DropdownMenuItem onClick={() => removeCamera(camera.id)} className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Remove
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No cameras configured.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
