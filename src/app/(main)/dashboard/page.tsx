@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import RGL, { WidthProvider } from 'react-grid-layout';
+import { Button } from '@/components/ui/button';
+import { LayoutGrid } from 'lucide-react';
 
 const GridLayout = WidthProvider(RGL);
 
@@ -25,9 +27,17 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Your customized camera feed layout.</p>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Your customized camera feed layout.</p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/settings/layout">
+            <LayoutGrid className="mr-2" />
+            Edit Layout
+          </Link>
+        </Button>
       </header>
        {cameras.length > 0 ? (
           <GridLayout
