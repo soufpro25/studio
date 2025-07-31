@@ -46,13 +46,13 @@ export default function SettingsPage() {
           <CardContent>
               <div className="rounded-md border p-4 flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium">Dashboard Layout</h3>
-                  <p className="text-sm text-muted-foreground">Customize the grid layout for your camera feeds.</p>
+                  <h3 className="font-medium">Dashboard Layouts</h3>
+                  <p className="text-sm text-muted-foreground">Create and manage your custom dashboard layouts.</p>
                 </div>
                  <Button asChild>
-                    <Link href="/settings/layout">
+                    <Link href="/settings/layouts">
                         <LayoutGrid className="mr-2 h-4 w-4" />
-                        Edit Layout
+                        Manage Layouts
                     </Link>
                  </Button>
               </div>
@@ -61,7 +61,10 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Your Cameras</CardTitle>
+          <div>
+            <CardTitle>Your Cameras</CardTitle>
+            <CardDescription>A list of all cameras connected to the system.</CardDescription>
+          </div>
           <AddCameraDialog />
         </CardHeader>
         <CardContent>

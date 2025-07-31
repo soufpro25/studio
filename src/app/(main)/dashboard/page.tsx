@@ -4,25 +4,38 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAtom } from 'jotai';
-import { camerasAtom, layoutAtom } from '@/lib/store';
+import { camerasAtom, layoutsAtom, activeLayoutIdAtom } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import RGL, { WidthProvider } from 'react-grid-layout';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, Plus, Settings } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useMemo } from 'react';
 
 const GridLayout = WidthProvider(RGL);
 
 
 export default function DashboardPage() {
   const [cameras] = useAtom(camerasAtom);
-  const [layout, setLayout] = useAtom(layoutAtom);
+  const [layouts] = useAtom(layoutsAtom);
+  const [activeLayoutId, setActiveLayoutId] = useAtom(activeLayoutIdAtom);
 
-  // Ensure layout is an array before filtering
-  const safeLayout = Array.isArray(layout) ? layout : [];
+  const activeLayout = useMemo(() => {
+    return layouts.find(l => l.id === activeLayoutId)?.layout || [];
+  }, [layouts, activeLayoutId]);
+
+  const safeLayout = Array.isArray(activeLayout) ? activeLayout : [];
   
-  // Filter out cameras that are not in the layout
   const camerasInLayout = cameras.filter(cam => safeLayout.some(l => l.i === cam.id));
 
   return (
@@ -30,16 +43,39 @@ export default function DashboardPage() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Your customized camera feed layout.</p>
+           <p className="text-muted-foreground">
+            {layouts.find(l => l.id === activeLayoutId)?.name || 'Select a layout'}
+          </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/settings/layout">
-            <LayoutGrid className="mr-2" />
-            Edit Layout
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <LayoutGrid className="mr-2" />
+                  <span>Change Layout</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                 <DropdownMenuRadioGroup value={activeLayoutId || ''} onValueChange={setActiveLayoutId}>
+                  {layouts.map((layout) => (
+                    <DropdownMenuRadioItem key={layout.id} value={layout.id}>
+                      {layout.name}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                   <Link href="/settings/layouts">
+                    <Settings className="mr-2" />
+                    Manage Layouts
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
       </header>
-       {cameras.length > 0 ? (
+       {cameras.length > 0 && activeLayoutId ? (
           <GridLayout
             className="layout"
             layout={safeLayout}
@@ -76,8 +112,16 @@ export default function DashboardPage() {
           </GridLayout>
         ) : (
           <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center">
-              <h3 className="text-lg font-semibold">No Cameras Found</h3>
-              <p className="text-sm text-muted-foreground">Go to the settings page to add your first camera.</p>
+              <h3 className="text-lg font-semibold">{activeLayoutId ? 'No Cameras In Layout' : 'No Layout Selected'}</h3>
+              <p className="text-sm text-muted-foreground">
+                {activeLayoutId ? 'Edit the layout to add cameras.' : 'Choose a layout from the dropdown to get started.'}
+              </p>
+               <Button asChild className="mt-4">
+                  <Link href="/settings/layouts">
+                    <Plus className="mr-2" />
+                    Create a Layout
+                  </Link>
+                </Button>
           </div>
         )}
     </div>
