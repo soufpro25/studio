@@ -20,8 +20,11 @@ export default function EditLayoutPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Ensure savedLayout is an array before processing
+    const safeSavedLayout = Array.isArray(savedLayout) ? savedLayout : [];
+    
     // Sync the current layout with saved layout, adding any new cameras
-    const existingIds = new Set(savedLayout.map(item => item.i));
+    const existingIds = new Set(safeSavedLayout.map(item => item.i));
     const newCameras = cameras.filter(cam => !existingIds.has(cam.id));
 
     const newItems: Layout[] = newCameras.map((cam, index) => ({
@@ -32,7 +35,7 @@ export default function EditLayoutPage() {
       h: 4,
     }));
 
-    setCurrentLayout([...savedLayout, ...newItems]);
+    setCurrentLayout([...safeSavedLayout, ...newItems]);
   }, [cameras, savedLayout]);
 
   const onLayoutChange = (newLayout: Layout[]) => {
