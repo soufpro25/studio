@@ -45,7 +45,7 @@ export const initialCameras: Camera[] = [
     location: 'Entrance',
     status: 'Online',
     thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: 'rtsp://aegis.view/stream1',
+    streamUrl: 'http://<YOUR_SERVER_IP>:1984/stream.html?src=front_door',
   },
   {
     id: 'cam-002',
@@ -53,7 +53,7 @@ export const initialCameras: Camera[] = [
     location: 'Exterior',
     status: 'Online',
     thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: 'rtsp://aegis.view/stream2',
+    streamUrl: 'http://<YOUR_SERVER_IP>:1984/stream.html?src=backyard',
   },
   {
     id: 'cam-003',
@@ -61,7 +61,7 @@ export const initialCameras: Camera[] = [
     location: 'Interior',
     status: 'Offline',
     thumbnailUrl: 'https://placehold.co/600x400/7f8c8d/ffffff',
-    streamUrl: 'rtsp://aegis.view/stream3',
+    streamUrl: '',
   },
   {
     id: 'cam-004',
@@ -69,7 +69,7 @@ export const initialCameras: Camera[] = [
     location: 'Exterior',
     status: 'Online',
     thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: 'rtsp://aegis.view/stream4',
+    streamUrl: '',
   },
 ];
 

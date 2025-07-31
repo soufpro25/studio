@@ -20,69 +20,10 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
   const { id } = use(params);
   const [cameras] = useAtom(camerasAtom);
   const camera = cameras.find((c) => c.id === id);
-  const [videoSource, setVideoSource] = useState<VideoSource>('demo');
-  const [hasCameraPermission, setHasCameraPermission] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  
+  // Default to live if a valid streamUrl exists, otherwise demo
+  const [videoSource, setVideoSource] = useState<VideoSource>(camera?.streamUrl ? 'live' : 'demo');
   const { toast } = useToast();
-
-  const stopStream = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setHasCameraPermission(false);
-  };
-  
-  const startLiveStream = async () => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      toast({
-        variant: 'destructive',
-        title: 'Unsupported Browser',
-        description: 'Your browser does not support camera access.',
-      });
-      setHasCameraPermission(false);
-      setVideoSource('demo'); // Fallback to demo
-      return;
-    }
-  
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      streamRef.current = stream;
-      setHasCameraPermission(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      setHasCameraPermission(false);
-      toast({
-        variant: 'destructive',
-        title: 'Camera Access Denied',
-        description: 'Please enable camera permissions in your browser settings to use the live feed.',
-      });
-      setVideoSource('demo'); // Fallback to demo
-    }
-  };
-
-  useEffect(() => {
-    if (videoSource === 'live') {
-      startLiveStream();
-    } else {
-      stopStream();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoSource]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopStream();
-    };
-  }, []);
 
   if (!camera) {
     notFound();
@@ -95,6 +36,17 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
     { icon: Snowflake, label: 'Icy' }
   ]
 
+  const isValidHttpUrl = (str: string) => {
+    try {
+      const url = new URL(str);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+      return false;
+    }
+  }
+  
+  const hasLiveFeed = camera && camera.streamUrl && isValidHttpUrl(camera.streamUrl);
+
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -105,16 +57,25 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
         <div className="lg:col-span-2">
           <Card className="overflow-hidden">
             <AspectRatio ratio={16 / 9} className="relative bg-muted">
-              <video
-                ref={videoRef}
-                key={videoSource}
-                src={videoSource === 'demo' ? "https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4" : undefined}
-                className="h-full w-full object-cover"
-                autoPlay
-                muted
-                playsInline
-                loop={videoSource === 'demo'}
-              />
+              {videoSource === 'live' && hasLiveFeed ? (
+                 <iframe
+                  src={camera.streamUrl}
+                  className="h-full w-full border-0"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  title={`Live feed from ${camera.name}`}
+                ></iframe>
+              ) : (
+                <video
+                  key="demo-video"
+                  src="https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4"
+                  className="h-full w-full object-cover"
+                  autoPlay
+                  muted
+                  playsInline
+                  loop
+                />
+              )}
               <div className="absolute right-2 top-2 flex flex-col gap-2">
                 <Button size="icon" variant="ghost" className="bg-black/20 hover:bg-black/50">
                   <Maximize className="h-5 w-5" />
@@ -122,11 +83,11 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
               </div>
             </AspectRatio>
           </Card>
-          {!hasCameraPermission && videoSource === 'live' && (
+          {videoSource === 'live' && !hasLiveFeed && (
              <Alert variant="destructive" className="mt-4">
-              <AlertTitle>Camera Access Required</AlertTitle>
+              <AlertTitle>Live Feed Not Available</AlertTitle>
               <AlertDescription>
-                Please allow camera access in your browser to see the live feed. You can still view the demo video.
+                A valid stream URL has not been configured for this camera. Please update it in the settings. You are currently viewing the demo video.
               </AlertDescription>
             </Alert>
           )}
@@ -144,7 +105,7 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
                     <Video className="mr-2 h-4 w-4" />
                     Demo
                   </Button>
-                  <Button variant={videoSource === 'live' ? 'secondary' : 'outline'} onClick={() => setVideoSource('live')}>
+                  <Button variant={videoSource === 'live' ? 'secondary' : 'outline'} onClick={() => setVideoSource('live')} disabled={!hasLiveFeed}>
                      <Camera className="mr-2 h-4 w-4" />
                     Live
                   </Button>

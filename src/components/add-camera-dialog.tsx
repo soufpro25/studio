@@ -35,13 +35,13 @@ import { AspectRatio } from './ui/aspect-ratio';
 const formSchema = z.object({
   name: z.string().min(1, 'Camera name is required'),
   location: z.string().min(1, 'Location is required'),
-  streamUrl: z.string().url('Must be a valid URL').startsWith('rtsp://', 'URL must start with rtsp://'),
+  streamUrl: z.string().url('Must be a valid HTTP/HTTPS URL').startsWith('http', 'URL must start with http:// or https://'),
 });
 
 function ManualAddForm({ onFormSubmit }: { onFormSubmit: (values: z.infer<typeof formSchema>) => void }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '', location: '', streamUrl: 'rtsp://' },
+    defaultValues: { name: '', location: '', streamUrl: 'http://' },
     mode: 'onChange'
   });
 
@@ -86,7 +86,7 @@ function ManualAddForm({ onFormSubmit }: { onFormSubmit: (values: z.infer<typeof
                 <FormItem>
                   <FormLabel>Stream URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="rtsp://192.168.1.100/stream" {...field} />
+                    <Input placeholder="http://192.168.1.50:1984/stream.html?src=my_cam" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -97,22 +97,21 @@ function ManualAddForm({ onFormSubmit }: { onFormSubmit: (values: z.infer<typeof
               <FormLabel>Camera Preview</FormLabel>
               <AspectRatio ratio={16 / 9} className="bg-muted rounded-md overflow-hidden border">
                 {isUrlValid ? (
-                     <video
-                        src="https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4"
-                        className="h-full w-full object-cover"
-                        autoPlay
-                        muted
-                        playsInline
-                        loop
-                      />
+                     <iframe
+                        src={streamUrl}
+                        className="h-full w-full border-0"
+                        allow="autoplay; encrypted-media; picture-in-picture"
+                        allowFullScreen
+                        title="Camera Preview"
+                      ></iframe>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 p-4 text-center">
                         <Video className="h-8 w-8" />
-                        <p className="text-sm">Enter a valid RTSP stream URL to see a preview.</p>
+                        <p className="text-sm">Enter a valid stream URL from your media server to see a preview.</p>
                     </div>
                 )}
               </AspectRatio>
-              <p className="text-xs text-muted-foreground text-center">Note: Preview shows a sample video for demonstration.</p>
+              <p className="text-xs text-muted-foreground text-center">Note: Preview requires a running go2rtc or similar media server.</p>
           </div>
         </div>
         
