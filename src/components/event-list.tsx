@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -16,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Loader2 } from 'lucide-react';
+import { Bot, Loader2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
@@ -25,9 +26,18 @@ export function EventList() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
-  const handleAnalyzeAll = () => {
+  const handleAnalyze = () => {
     startTransition(async () => {
       try {
+        const eventsToAnalyze = events.filter(event => !event.analysis);
+        if (eventsToAnalyze.length === 0) {
+            toast({
+                title: 'No events to analyze',
+                description: 'All events have already been analyzed.',
+            });
+            return;
+        }
+
         const results = await Promise.all(
           events.map(async (event) => {
             if (event.analysis) return event; // Skip already analyzed
@@ -42,7 +52,7 @@ export function EventList() {
         setEvents(results);
         toast({
           title: 'Analysis Complete',
-          description: 'All events have been analyzed by the AI.',
+          description: 'All unanalyzed events have been processed by the AI.',
         });
       } catch (error) {
         console.error('Failed to analyze events:', error);
@@ -54,27 +64,45 @@ export function EventList() {
       }
     });
   };
+  
+  const handleClearAnalysis = () => {
+    setEvents(events.map(e => ({...e, analysis: undefined})));
+    toast({
+        title: 'Analysis Cleared',
+        description: 'AI analysis has been cleared from all events.',
+    });
+  }
 
   const hasUnanalyzedEvents = events.some(event => !event.analysis);
+  const hasAnalyzedEvents = events.some(event => event.analysis);
+
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>All Events</CardTitle>
-        {hasUnanalyzedEvents && (
-          <Button onClick={handleAnalyzeAll} disabled={isPending}>
-            {isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Bot className="mr-2 h-4 w-4" />
+        <div className="flex flex-col gap-2 sm:flex-row">
+            {hasUnanalyzedEvents && (
+              <Button onClick={handleAnalyze} disabled={isPending}>
+                {isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Bot className="mr-2 h-4 w-4" />
+                )}
+                Analyze Remaining Events
+              </Button>
             )}
-            Filter with AI
-          </Button>
-        )}
+            {hasAnalyzedEvents && (
+                 <Button onClick={handleClearAnalysis} variant="outline" disabled={isPending}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Clear Analysis
+                </Button>
+            )}
+        </div>
       </CardHeader>
       <CardContent>
-        {isPending && !events.some(e => e.analysis) && (
-            <Alert>
+        {isPending && (
+            <Alert className="mb-4">
                 <Bot className="h-4 w-4" />
                 <AlertTitle>AI is analyzing events...</AlertTitle>
                 <AlertDescription>This may take a moment. Please wait.</AlertDescription>
