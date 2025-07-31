@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Plus, Trash2, Copy } from 'lucide-react';
+import { Plus, Trash2, Copy, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
@@ -76,6 +76,11 @@ export default function ManageLayoutsPage() {
   const onLayoutChange = (newLayout: Layout[]) => {
     setCurrentLayout(newLayout);
   };
+
+  const handleRemoveFromLayout = (cameraId: string) => {
+    setCurrentLayout(prev => prev.filter(item => item.i !== cameraId));
+    toast({ title: "Camera removed from layout."});
+  }
   
   const handleCreateNewLayout = () => {
     const newId = `layout-${Date.now()}`;
@@ -195,9 +200,12 @@ export default function ManageLayoutsPage() {
                           <div key={item.i} className="group flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm">
                               {camera ? (
                                 <>
-                                  <div className="flex items-center justify-between p-2 border-b cursor-move">
+                                  <div className="relative flex items-center justify-between p-2 border-b cursor-move">
                                       <h3 className="font-medium text-sm truncate">{camera.name}</h3>
                                       <div className="h-2 w-2 rounded-full shrink-0" style={{backgroundColor: camera.status === 'Online' ? 'hsl(var(--accent))' : 'hsl(var(--destructive))'}}/>
+                                       <Button variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleRemoveFromLayout(camera.id)}>
+                                        <X className="h-4 w-4" />
+                                      </Button>
                                   </div>
                                   <div className="flex-grow bg-muted p-2">
                                     <AspectRatio ratio={16/9} className="flex items-center justify-center">
