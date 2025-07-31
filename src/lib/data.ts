@@ -1,4 +1,3 @@
-import type { FilterEventsOutput } from "@/ai/flows/filter-events";
 
 export interface Camera {
   id: string;
@@ -28,7 +27,7 @@ export interface MotionEvent {
   thumbnailUrl: string;
 }
 
-export type AnalyzedEvent = MotionEvent & { analysis?: FilterEventsOutput };
+export type AnalyzedEvent = MotionEvent;
 
 export const cameras: Camera[] = [
   {
