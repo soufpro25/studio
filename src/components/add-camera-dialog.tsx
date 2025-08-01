@@ -154,7 +154,7 @@ export function AddCameraDialog() {
                   <FormLabel>RTSP Stream URL</FormLabel>
                   <FormControl>
                     <Input placeholder="rtsp://user:pass@host:port/path" {...field} />
-FormControl>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
