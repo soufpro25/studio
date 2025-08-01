@@ -2,7 +2,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAtom } from 'jotai';
 import { camerasAtom, layoutsAtom, activeLayoutIdAtom } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import RGL, { WidthProvider } from 'react-grid-layout';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Plus, Settings } from 'lucide-react';
+import { LayoutGrid, Plus, Settings, VideoOff } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,8 +35,17 @@ export default function DashboardPage() {
 
   const safeLayout = useMemo(() => Array.isArray(activeLayout) ? activeLayout : [], [activeLayout]);
   
-  // We create a map for quick lookup of camera objects by their ID.
   const cameraMap = useMemo(() => new Map(cameras.map(cam => [cam.id, cam])), [cameras]);
+  
+  const isValidHttpUrl = (str: string | undefined) => {
+    if (!str) return false;
+    try {
+      const url = new URL(str);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+      return false;
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -81,7 +89,6 @@ export default function DashboardPage() {
             className="layout"
             layout={safeLayout}
             onLayoutChange={(newLayout) => {
-              // Update the layout atom when the user drags/resizes
                setLayouts(currentLayouts =>
                   currentLayouts.map(l =>
                     l.id === activeLayoutId ? { ...l, layout: newLayout } : l
@@ -95,31 +102,42 @@ export default function DashboardPage() {
           >
             {safeLayout.map((item) => {
                 const camera = cameraMap.get(item.i);
-                if (!camera) return null; // Don't render if camera not found
+                if (!camera) return null;
+
+                const hasLiveFeed = isValidHttpUrl(camera.streamUrl);
 
                 return (
                   <div key={camera.id} className="group overflow-hidden rounded-lg bg-card shadow-sm">
-                    <Link href={`/cameras/${camera.id}`} className="block h-full w-full">
-                        <Card className="flex h-full w-full flex-col border-0 shadow-none">
-                          <CardHeader className="flex flex-row items-center justify-between p-2 cursor-move">
-                            <CardTitle className="truncate text-sm font-medium">{camera.name}</CardTitle>
-                            <Badge variant={camera.status === 'Online' ? 'outline' : 'destructive'} className={`${camera.status === 'Online' ? 'border-green-400/50 text-green-400' : ''} text-xs`}>
-                              {camera.status}
-                            </Badge>
-                          </CardHeader>
-                          <CardContent className="flex-grow p-0">
-                            <AspectRatio ratio={16 / 9} className="h-full bg-muted">
-                               <Image
-                                  src={camera.thumbnailUrl}
-                                  alt={`Placeholder for ${camera.name}`}
-                                  fill
-                                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                  data-ai-hint="security camera"
-                                />
-                            </AspectRatio>
-                          </CardContent>
-                        </Card>
-                    </Link>
+                      <Card className="flex h-full w-full flex-col border-0 shadow-none">
+                        <CardHeader className="flex flex-row items-center justify-between p-2 cursor-move">
+                          <CardTitle className="truncate text-sm font-medium">
+                            <Link href={`/cameras/${camera.id}`} className="hover:underline">
+                                {camera.name}
+                            </Link>
+                          </CardTitle>
+                          <Badge variant={camera.status === 'Online' ? 'outline' : 'destructive'} className={`${camera.status === 'Online' ? 'border-green-400/50 text-green-400' : ''} text-xs`}>
+                            {camera.status}
+                          </Badge>
+                        </CardHeader>
+                        <CardContent className="flex-grow p-0">
+                          <AspectRatio ratio={16 / 9} className="h-full bg-muted">
+                              {hasLiveFeed ? (
+                                <iframe
+                                  src={camera.streamUrl}
+                                  className="h-full w-full border-0"
+                                  allow="autoplay; encrypted-media; picture-in-picture"
+                                  allowFullScreen={false}
+                                  title={`Live feed from ${camera.name}`}
+                                ></iframe>
+                              ) : (
+                                <div className="flex h-full w-full flex-col items-center justify-center bg-muted text-muted-foreground">
+                                    <VideoOff className="h-8 w-8" />
+                                    <p className="mt-2 text-sm">No valid stream URL</p>
+                                </div>
+                              )}
+                          </AspectRatio>
+                        </CardContent>
+                      </Card>
                   </div>
                 )
             })}
