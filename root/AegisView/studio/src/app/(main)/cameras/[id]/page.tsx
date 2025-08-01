@@ -9,23 +9,26 @@ import { Button } from '@/components/ui/button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Maximize, Video, Camera, Sun, Contrast, Wind, Snowflake } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useState, use } from 'react';
+import { useState, use, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { GridSelector } from '@/components/grid-selector';
 
 type VideoSource = 'demo' | 'live';
 
-export default function CameraDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function CameraDetailPage({ params }: { params: { id: string } }) {
   const { id } = use(params);
   const [cameras] = useAtom(camerasAtom);
-  const camera = cameras.find((c) => c.id === id);
+
+  const camera = useMemo(() => cameras.find((c) => c.id === id), [cameras, id]);
   
   const [videoSource, setVideoSource] = useState<VideoSource>('live');
   const { toast } = useToast();
 
   if (!camera) {
-    notFound();
+    // This can happen briefly on first load before Jotai state is synced from sessionStorage
+    // Or if the camera ID is invalid. We can show a loading state or redirect.
+    return null;
   }
 
   const filters = [
@@ -35,7 +38,8 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
     { icon: Snowflake, label: 'Icy' }
   ]
 
-  const isValidHttpUrl = (str: string) => {
+  const isValidHttpUrl = (str: string | undefined) => {
+    if (!str) return false;
     try {
       const url = new URL(str);
       return url.protocol === 'http:' || url.protocol === 'https:';
@@ -44,7 +48,7 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
     }
   }
   
-  const hasLiveFeed = camera && camera.streamUrl && isValidHttpUrl(camera.streamUrl);
+  const hasLiveFeed = isValidHttpUrl(camera.streamUrl);
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,7 +90,7 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
              <Alert variant="destructive" className="mt-4">
               <AlertTitle>Live Feed Not Available</AlertTitle>
               <AlertDescription>
-                A valid stream URL has not been configured for this camera. Please update it in the settings. You are currently viewing the demo video.
+                A valid stream URL has not been configured for this camera. Please add one in the settings. You are currently viewing the demo video.
               </AlertDescription>
             </Alert>
           )}

@@ -11,14 +11,16 @@ export async function POST(request: Request) {
         const { service } = await request.json();
 
         if (service === 'go2rtc') {
+            // Important: Using sudo requires passwordless configuration for this specific command.
+            // Add to sudoers: `root ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart go2rtc.service`
             await execAsync('sudo systemctl restart go2rtc.service');
             return NextResponse.json({ message: 'go2rtc service is restarting.' });
         }
         
         if (service === 'webapp') {
             // This is a common way to trigger a restart with process managers like PM2 or nodemon.
-            // In a production environment, a more robust method might be needed.
-            await fs.utimes('package.json', new Date(), new Date());
+            // You may need to adapt this command based on how you run the Next.js app in production.
+            await execAsync('touch package.json');
             return NextResponse.json({ message: 'Web app is restarting. The page will reload shortly.' });
         }
 

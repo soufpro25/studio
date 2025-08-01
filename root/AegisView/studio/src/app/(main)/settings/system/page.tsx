@@ -42,7 +42,8 @@ export default function SystemPage() {
         variant: 'destructive',
       });
     } finally {
-      setLoading(null);
+      // Add a small delay before resetting loading state to give user feedback
+      setTimeout(() => setLoading(null), 1000);
     }
   };
 

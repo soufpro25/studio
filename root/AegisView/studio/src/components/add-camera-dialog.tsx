@@ -53,20 +53,16 @@ export function AddCameraDialog() {
     const newCameraId = `cam-${Date.now()}`;
     const streamKey = newCameraId.replace(/[^a-zA-Z0-9]/g, '');
 
-    // The streamUrl needs to be dynamically aware of the server's IP.
-    // For now, we'll use a placeholder or a known IP.
-    // A more robust solution might involve getting this from an environment variable.
-    const hostIp = window.location.hostname;
-
     const newCamera: Camera = {
       id: newCameraId,
       name: values.name,
       location: values.location,
       rtspUrl: values.rtspUrl,
-      // The streamUrl is the final go2rtc HTTP stream URL
-      streamUrl: `http://${hostIp}:1984/stream.html?src=${streamKey}`,
+      // The streamUrl will depend on the machine's IP, which should be dynamic.
+      // We use window.location.hostname to get the current host.
+      streamUrl: `http://${window.location.hostname}:1984/stream.html?src=${streamKey}`,
       status: 'Online',
-      thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
+      thumbnailUrl: `https://placehold.co/600x400?text=${values.name.replace(/\s/g, '+')}`,
     };
 
     try {
