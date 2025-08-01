@@ -27,8 +27,9 @@ import { z } from 'zod';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAtom } from 'jotai';
-import { camerasAtom } from '@/lib/store';
+import { camerasAtom, layoutsAtom, activeLayoutIdAtom } from '@/lib/store';
 import type { Camera } from '@/lib/data';
+import type { Layout } from 'react-grid-layout';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Camera name is required'),
@@ -41,6 +42,8 @@ export function AddCameraDialog() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const [, setCameras] = useAtom(camerasAtom);
+  const [layouts, setLayouts] = useAtom(layoutsAtom);
+  const [activeLayoutId] = useAtom(activeLayoutIdAtom);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -71,7 +74,6 @@ export function AddCameraDialog() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: newCameraId,
-          name: values.name,
           rtspUrl: values.rtspUrl,
         }),
       });
@@ -84,6 +86,30 @@ export function AddCameraDialog() {
       
       // Update UI state only on successful API call
       setCameras((prev) => [...prev, newCamera]);
+
+      // Automatically add the new camera to the active layout
+      if (activeLayoutId) {
+        setLayouts((prevLayouts) => {
+          return prevLayouts.map((layout) => {
+            if (layout.id === activeLayoutId) {
+              const currentLayout = Array.isArray(layout.layout) ? layout.layout : [];
+              const newItem: Layout = {
+                i: newCamera.id,
+                x: (currentLayout.length * 6) % 12,
+                y: Infinity, // Places it at the bottom
+                w: 6,
+                h: 4,
+              };
+              return {
+                ...layout,
+                layout: [...currentLayout, newItem],
+              };
+            }
+            return layout;
+          });
+        });
+      }
+
 
       toast({
         title: 'Camera Added',

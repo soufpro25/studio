@@ -1,0 +1,150 @@
+
+'use client';
+
+import Link from 'next/link';
+import Image from 'next/image';
+import { useAtom } from 'jotai';
+import { camerasAtom, layoutsAtom, activeLayoutIdAtom } from '@/lib/store';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import RGL, { WidthProvider } from 'react-grid-layout';
+import { Button } from '@/components/ui/button';
+import { LayoutGrid, Plus, Settings } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useMemo } from 'react';
+
+const GridLayout = WidthProvider(RGL);
+
+
+export default function DashboardPage() {
+  const [cameras] = useAtom(camerasAtom);
+  const [layouts, setLayouts] = useAtom(layoutsAtom);
+  const [activeLayoutId, setActiveLayoutId] = useAtom(activeLayoutIdAtom);
+
+  const activeLayout = useMemo(() => {
+    return layouts.find(l => l.id === activeLayoutId)?.layout || [];
+  }, [layouts, activeLayoutId]);
+
+  const safeLayout = useMemo(() => Array.isArray(activeLayout) ? activeLayout : [], [activeLayout]);
+  
+  // This derives the cameras to show from the layout, which is the source of truth for the dashboard
+  const camerasInLayout = useMemo(() => {
+     const layoutCameraIds = new Set(safeLayout.map(item => item.i));
+     return cameras.filter(cam => layoutCameraIds.has(cam.id));
+  }, [cameras, safeLayout]);
+
+
+  // We create a map for quick lookup of camera objects by their ID.
+  const cameraMap = useMemo(() => new Map(cameras.map(cam => [cam.id, cam])), [cameras]);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+           <p className="text-muted-foreground">
+            {layouts.find(l => l.id === activeLayoutId)?.name || 'Select a layout'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <LayoutGrid className="mr-2" />
+                  <span>Change Layout</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                 <DropdownMenuRadioGroup value={activeLayoutId || ''} onValueChange={setActiveLayoutId}>
+                  {layouts.map((layout) => (
+                    <DropdownMenuRadioItem key={layout.id} value={layout.id}>
+                      {layout.name}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                   <Link href="/settings/layouts">
+                    <Settings className="mr-2" />
+                    Manage Layouts
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+      </header>
+       {cameras.length > 0 && activeLayoutId ? (
+          <GridLayout
+            className="layout"
+            layout={safeLayout}
+            onLayoutChange={(newLayout) => {
+              // Update the layout atom when the user drags/resizes
+               setLayouts(currentLayouts =>
+                  currentLayouts.map(l =>
+                    l.id === activeLayoutId ? { ...l, layout: newLayout } : l
+                  )
+                );
+            }}
+            cols={12}
+            rowHeight={30}
+            isDraggable={true}
+            isResizable={true}
+          >
+            {safeLayout.map((item) => {
+                const camera = cameraMap.get(item.i);
+                if (!camera) return null; // Don't render if camera not found
+
+                return (
+                  <div key={camera.id} className="group overflow-hidden rounded-lg bg-card shadow-sm">
+                    <Link href={`/cameras/${camera.id}`} className="block h-full w-full">
+                        <Card className="flex h-full w-full flex-col border-0 shadow-none">
+                          <CardHeader className="flex flex-row items-center justify-between p-2 cursor-move">
+                            <CardTitle className="truncate text-sm font-medium">{camera.name}</CardTitle>
+                            <Badge variant={camera.status === 'Online' ? 'outline' : 'destructive'} className={`${camera.status === 'Online' ? 'border-green-400/50 text-green-400' : ''} text-xs`}>
+                              {camera.status}
+                            </Badge>
+                          </CardHeader>
+                          <CardContent className="flex-grow p-0">
+                            <AspectRatio ratio={16 / 9} className="h-full bg-muted">
+                              <Image
+                                src={camera.thumbnailUrl}
+                                alt={`Live feed from ${camera.name}`}
+                                fill
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                data-ai-hint="security camera"
+                              />
+                            </AspectRatio>
+                          </CardContent>
+                        </Card>
+                    </Link>
+                  </div>
+                )
+            })}
+          </GridLayout>
+        ) : (
+          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center">
+              <h3 className="text-lg font-semibold">{activeLayoutId ? 'No Cameras In Layout' : 'No Layout Selected'}</h3>
+              <p className="text-sm text-muted-foreground">
+                {activeLayoutId ? 'Edit the layout to add cameras, or add a new camera.' : 'Choose a layout from the dropdown to get started.'}
+              </p>
+               <Button asChild className="mt-4">
+                  <Link href="/settings/layouts">
+                    <Plus className="mr-2" />
+                    Create or Edit a Layout
+                  </Link>
+                </Button>
+          </div>
+        )}
+    </div>
+  );
+}
