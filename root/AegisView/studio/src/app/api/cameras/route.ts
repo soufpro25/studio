@@ -71,8 +71,8 @@ export async function POST(request: Request) {
 
         const config = await readGo2RtcConfig();
         
-        // Use a simple sanitized name for the stream key
-        const streamKey = id.replace(/[^a-zA-Z0-9]/g, '');
+        // Use a simple sanitized name for the stream key, which is the camera id.
+        const streamKey = id;
 
         if (!config.streams) {
             config.streams = {};
@@ -100,7 +100,7 @@ export async function DELETE(request: Request) {
 
         const config = await readGo2RtcConfig();
         
-        const streamKey = id.replace(/[^a-zA-Z0-9]/g, '');
+        const streamKey = id;
 
         if (config.streams && config.streams[streamKey]) {
             delete config.streams[streamKey];

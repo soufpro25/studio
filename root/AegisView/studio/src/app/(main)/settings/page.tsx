@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { useAtom } from 'jotai';
-import { camerasAtom } from '@/lib/store';
+import { camerasAtom, layoutsAtom, activeLayoutIdAtom } from '@/lib/store';
 import {
   Table,
   TableBody,
@@ -27,12 +27,24 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const [cameras, setCameras] = useAtom(camerasAtom);
+  const [layouts, setLayouts] = useAtom(layoutsAtom);
+  const [activeLayoutId] = useAtom(activeLayoutIdAtom);
   const { toast } = useToast();
 
   const removeCamera = async (id: string) => {
-    // Optimistically update UI
     const originalCameras = cameras;
+    const originalLayouts = layouts;
+    
+    // Optimistically update UI
     setCameras((prev) => prev.filter((c) => c.id !== id));
+    // Remove camera from all layouts
+    setLayouts((prevLayouts) => 
+        prevLayouts.map(layout => ({
+            ...layout,
+            layout: layout.layout.filter(item => item.i !== id)
+        }))
+    );
+
 
     try {
       const response = await fetch('/api/cameras', {
@@ -48,7 +60,7 @@ export default function SettingsPage() {
 
       toast({
         title: 'Camera Removed',
-        description: 'The camera has been removed from your configuration.',
+        description: 'The camera has been removed from your configuration and all layouts.',
       });
 
     } catch (error: any) {
@@ -60,6 +72,7 @@ export default function SettingsPage() {
       });
       // Rollback UI on failure
       setCameras(originalCameras);
+      setLayouts(originalLayouts);
     }
   };
 

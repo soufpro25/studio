@@ -42,7 +42,7 @@ export function AddCameraDialog() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const [, setCameras] = useAtom(camerasAtom);
-  const [layouts, setLayouts] = useAtom(layoutsAtom);
+  const [, setLayouts] = useAtom(layoutsAtom);
   const [activeLayoutId] = useAtom(activeLayoutIdAtom);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -53,19 +53,21 @@ export function AddCameraDialog() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const newCameraId = `cam-${Date.now()}`;
-    const streamKey = newCameraId.replace(/[^a-zA-Z0-9]/g, '');
+    const newCameraId = `cam_${Date.now()}`;
+    
+    // The camera ID is used as the stream key in go2rtc
+    const streamKey = newCameraId;
 
     const newCamera: Camera = {
       id: newCameraId,
       name: values.name,
       location: values.location,
       rtspUrl: values.rtspUrl,
-      // The streamUrl will depend on the machine's IP, which should be dynamic.
-      // We use window.location.hostname to get the current host.
+      // The streamUrl is the public URL from go2rtc, constructed based on convention
+      // Assumes go2rtc is accessible on the same host as the webapp, on port 1984
       streamUrl: `http://${window.location.hostname}:1984/stream.html?src=${streamKey}`,
       status: 'Online',
-      thumbnailUrl: `https://placehold.co/600x400?text=${values.name.replace(/\s/g, '+')}`,
+      thumbnailUrl: `https://placehold.co/600x400?text=${encodeURIComponent(values.name)}`,
     };
 
     try {
@@ -74,6 +76,7 @@ export function AddCameraDialog() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: newCameraId,
+          name: values.name,
           rtspUrl: values.rtspUrl,
         }),
       });
@@ -95,7 +98,7 @@ export function AddCameraDialog() {
               const currentLayout = Array.isArray(layout.layout) ? layout.layout : [];
               const newItem: Layout = {
                 i: newCamera.id,
-                x: (currentLayout.length * 6) % 12,
+                x: (currentLayout.length * 6) % 12, // Simple placement logic
                 y: Infinity, // Places it at the bottom
                 w: 6,
                 h: 4,

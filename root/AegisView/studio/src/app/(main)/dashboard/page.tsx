@@ -36,13 +36,6 @@ export default function DashboardPage() {
 
   const safeLayout = useMemo(() => Array.isArray(activeLayout) ? activeLayout : [], [activeLayout]);
   
-  // This derives the cameras to show from the layout, which is the source of truth for the dashboard
-  const camerasInLayout = useMemo(() => {
-     const layoutCameraIds = new Set(safeLayout.map(item => item.i));
-     return cameras.filter(cam => layoutCameraIds.has(cam.id));
-  }, [cameras, safeLayout]);
-
-
   // We create a map for quick lookup of camera objects by their ID.
   const cameraMap = useMemo(() => new Map(cameras.map(cam => [cam.id, cam])), [cameras]);
 
@@ -116,13 +109,23 @@ export default function DashboardPage() {
                           </CardHeader>
                           <CardContent className="flex-grow p-0">
                             <AspectRatio ratio={16 / 9} className="h-full bg-muted">
-                              <Image
-                                src={camera.thumbnailUrl}
-                                alt={`Live feed from ${camera.name}`}
-                                fill
-                                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                data-ai-hint="security camera"
-                              />
+                              {camera.streamUrl ? (
+                                <iframe
+                                  src={camera.streamUrl}
+                                  className="h-full w-full border-0"
+                                  allow="autoplay; encrypted-media; picture-in-picture"
+                                  allowFullScreen
+                                  title={`Live feed from ${camera.name}`}
+                                ></iframe>
+                              ) : (
+                                <Image
+                                  src={camera.thumbnailUrl}
+                                  alt={`Placeholder for ${camera.name}`}
+                                  fill
+                                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                  data-ai-hint="security camera"
+                                />
+                              )}
                             </AspectRatio>
                           </CardContent>
                         </Card>
