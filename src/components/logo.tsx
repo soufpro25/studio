@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Camera } from 'lucide-react';
+import { Cctv } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +11,7 @@ export default function Logo() {
   return (
     <div className="flex items-center gap-2.5">
       <div className="flex-shrink-0 rounded-lg bg-primary/10 p-2">
-        <Camera className="h-6 w-6 text-primary" />
+        <Cctv className="h-6 w-6 text-primary" />
       </div>
       <h1 
         className={cn(
@@ -24,4 +24,3 @@ export default function Logo() {
     </div>
   );
 }
-
