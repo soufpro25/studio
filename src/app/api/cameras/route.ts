@@ -27,11 +27,11 @@ async function readGo2RtcConfig(): Promise<Go2RtcConfig> {
     } catch (error: any) {
         if (error.code === 'ENOENT') {
             // File doesn't exist, return a default config structure
-            return { streams: {} };
+            return { streams: {}, api: { listen: ':1984' } };
         }
         // For other errors, log it and return a safe default
         console.error('Error reading go2rtc config, returning default:', error);
-        return { streams: {} };
+        return { streams: {}, api: { listen: ':1984' } };
     }
 }
 
@@ -49,10 +49,12 @@ async function writeGo2RtcConfig(config: Go2RtcConfig) {
 
 async function restartGo2Rtc() {
     try {
+        // Important: Using sudo requires passwordless configuration for this specific command.
+        // Add to sudoers: `root ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart go2rtc.service`
         await execAsync('sudo systemctl restart go2rtc.service');
     } catch (error) {
         console.error('Failed to restart go2rtc service:', error);
-        throw new Error('Could not restart go2rtc service.');
+        throw new Error('Could not restart go2rtc service. Check server logs and sudoers configuration.');
     }
 }
 

@@ -42,7 +42,8 @@ export default function SettingsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete camera on server');
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to delete camera on server');
       }
 
       toast({
@@ -50,7 +51,7 @@ export default function SettingsPage() {
         description: 'The camera has been removed from your configuration.',
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         title: 'Error',

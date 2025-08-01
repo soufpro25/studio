@@ -10,7 +10,8 @@ import type { Layout } from 'react-grid-layout';
 const storage = createJSONStorage(() => sessionStorage);
 
 // ATOM FOR CAMERAS
-export const camerasAtom = atom<Camera[]>(initialCameras);
+// This atom now holds the source of truth for the UI, populated from session storage
+export const camerasAtom = atomWithStorage<Camera[]>('cameras', initialCameras, storage);
 
 // ATOM FOR USERS
 export const usersAtom = atom<User[]>(initialUsers);
@@ -29,13 +30,7 @@ export interface NamedLayout {
 const defaultLayout: NamedLayout = {
   id: 'default',
   name: 'Default View',
-  layout: initialCameras.slice(0, 4).map((cam, i) => ({
-    i: cam.id,
-    x: (i % 2) * 6,
-    y: Math.floor(i / 2) * 4,
-    w: 6,
-    h: 4,
-  })),
+  layout: [],
 };
 
 // This atom stores all the created layouts

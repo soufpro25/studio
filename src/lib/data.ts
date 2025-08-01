@@ -1,17 +1,17 @@
 
-
 export interface Camera {
   id: string;
   name: string;
   location: string;
   status: 'Online' | 'Offline';
   thumbnailUrl: string;
-  streamUrl: string;
+  rtspUrl: string; // The raw RTSP stream URL
+  streamUrl: string; // The go2rtc HTTP stream URL
 }
 
 export interface User {
   id: string;
-  name: string;
+  name:string;
   email: string;
   role: 'Admin' | 'Viewer';
   avatarUrl: string;
@@ -38,40 +38,8 @@ export interface MotionEvent {
 
 export type AnalyzedEvent = MotionEvent;
 
-export const initialCameras: Camera[] = [
-  {
-    id: 'cam-001',
-    name: 'Front Door',
-    location: 'Entrance',
-    status: 'Online',
-    thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: 'http://localhost:1984/stream.html?src=front_door',
-  },
-  {
-    id: 'cam-002',
-    name: 'Backyard',
-    location: 'Exterior',
-    status: 'Online',
-    thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: 'http://localhost:1984/stream.html?src=backyard',
-  },
-  {
-    id: 'cam-003',
-    name: 'Living Room',
-    location: 'Interior',
-    status: 'Offline',
-    thumbnailUrl: 'https://placehold.co/600x400/7f8c8d/ffffff',
-    streamUrl: '',
-  },
-  {
-    id: 'cam-004',
-    name: 'Garage',
-    location: 'Exterior',
-    status: 'Online',
-    thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: '',
-  },
-];
+// We start with an empty array. The app should reflect the actual configured state.
+export const initialCameras: Camera[] = []; 
 
 export const initialUsers: User[] = [
     {
