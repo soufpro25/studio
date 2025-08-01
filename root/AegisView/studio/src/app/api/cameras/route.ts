@@ -20,14 +20,17 @@ interface Go2RtcConfig {
 
 async function readGo2RtcConfig(): Promise<Go2RtcConfig> {
     try {
+        await fs.access(GO2RTC_CONFIG_PATH);
         const file = await fs.readFile(GO2RTC_CONFIG_PATH, 'utf-8');
         // If file is empty or just whitespace, yaml.load returns undefined
         const config = yaml.load(file) as Go2RtcConfig;
         return config || { streams: {} };
     } catch (error: any) {
+        // If file doesn't exist, create it with a default structure
         if (error.code === 'ENOENT') {
-            // File doesn't exist, return a default config structure
-            return { streams: {}, api: { listen: ':1984' } };
+            const defaultConfig: Go2RtcConfig = { streams: {}, api: { listen: ':1984' } };
+            await writeGo2RtcConfig(defaultConfig);
+            return defaultConfig;
         }
         // For other errors, log it and return a safe default
         console.error('Error reading go2rtc config, returning default:', error);
