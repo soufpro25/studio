@@ -109,23 +109,13 @@ export default function DashboardPage() {
                           </CardHeader>
                           <CardContent className="flex-grow p-0">
                             <AspectRatio ratio={16 / 9} className="h-full bg-muted">
-                              {camera.streamUrl ? (
-                                <iframe
-                                  src={camera.streamUrl}
-                                  className="h-full w-full border-0"
-                                  allow="autoplay; encrypted-media; picture-in-picture"
-                                  allowFullScreen
-                                  title={`Live feed from ${camera.name}`}
-                                ></iframe>
-                              ) : (
-                                <Image
+                               <Image
                                   src={camera.thumbnailUrl}
                                   alt={`Placeholder for ${camera.name}`}
                                   fill
                                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                                   data-ai-hint="security camera"
                                 />
-                              )}
                             </AspectRatio>
                           </CardContent>
                         </Card>
