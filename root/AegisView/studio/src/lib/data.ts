@@ -6,7 +6,6 @@ export interface Camera {
   status: 'Online' | 'Offline';
   thumbnailUrl: string;
   streamUrl: string; // This will be the go2rtc HTTP stream URL
-  rtspUrl: string; // The original RTSP URL
 }
 
 export interface User {
@@ -38,7 +37,7 @@ export interface MotionEvent {
 
 export type AnalyzedEvent = MotionEvent;
 
-export const initialCameras: Camera[] = []; // Start with an empty array, will be populated from config
+export const initialCameras: Camera[] = []; // Start with an empty array, will be populated from session storage
 
 export const initialUsers: User[] = [
     {

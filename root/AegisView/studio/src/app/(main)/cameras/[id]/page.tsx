@@ -9,16 +9,19 @@ import { Button } from '@/components/ui/button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Maximize, Video, Camera, Sun, Contrast, Wind, Snowflake } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useEffect, useRef, useState, use } from 'react';
+import { useState, use } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { GridSelector } from '@/components/grid-selector';
+
+type VideoSource = 'demo' | 'live';
 
 export default function CameraDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [cameras] = useAtom(camerasAtom);
   const camera = cameras.find((c) => c.id === id);
   
+  const [videoSource, setVideoSource] = useState<VideoSource>('live');
   const { toast } = useToast();
 
   if (!camera) {
@@ -31,18 +34,17 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
     { icon: Wind, label: 'Cool' },
     { icon: Snowflake, label: 'Icy' }
   ]
+
+  const isValidHttpUrl = (str: string) => {
+    try {
+      const url = new URL(str);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+      return false;
+    }
+  }
   
-  // Construct the go2rtc stream URL from the camera ID
-  // This assumes the API correctly configured go2rtc with the sanitized ID as the stream key
-  const streamKey = camera.id.replace(/[^a-zA-Z0-9]/g, '');
-  const [streamUrl, setStreamUrl] = useState('');
-
-  useEffect(() => {
-    // We construct the URL on the client-side to get the correct hostname
-    const url = `${window.location.protocol}//${window.location.hostname}:1984/stream.html?src=${streamKey}`;
-    setStreamUrl(url);
-  }, [streamKey]);
-
+  const hasLiveFeed = camera && camera.streamUrl && isValidHttpUrl(camera.streamUrl);
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,18 +56,24 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
         <div className="lg:col-span-2">
           <Card className="overflow-hidden">
             <AspectRatio ratio={16 / 9} className="relative bg-muted">
-              {streamUrl ? (
+              {videoSource === 'live' && hasLiveFeed ? (
                  <iframe
-                  src={streamUrl}
+                  src={camera.streamUrl}
                   className="h-full w-full border-0"
                   allow="autoplay; encrypted-media; picture-in-picture"
                   allowFullScreen
                   title={`Live feed from ${camera.name}`}
                 ></iframe>
               ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                    <p>Loading stream...</p>
-                </div>
+                <video
+                  key="demo-video"
+                  src="https://storage.googleapis.com/static.aiforge.dev/videos/security-cam-stock.mp4"
+                  className="h-full w-full object-cover"
+                  autoPlay
+                  muted
+                  playsInline
+                  loop
+                />
               )}
               <div className="absolute right-2 top-2 flex flex-col gap-2">
                 <Button size="icon" variant="ghost" className="bg-black/20 hover:bg-black/50">
@@ -74,6 +82,14 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
               </div>
             </AspectRatio>
           </Card>
+          {videoSource === 'live' && !hasLiveFeed && (
+             <Alert variant="destructive" className="mt-4">
+              <AlertTitle>Live Feed Not Available</AlertTitle>
+              <AlertDescription>
+                A valid stream URL has not been configured for this camera. Please update it in the settings. You are currently viewing the demo video.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
         <div className="lg:col-span-1">
           <Card>
@@ -82,15 +98,17 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="mb-2 font-medium">Stream Info</h4>
-                <p className='text-sm text-muted-foreground break-all'>
-                    <span className='font-medium text-foreground'>go2rtc URL: </span> 
-                    {streamUrl}
-                </p>
-                 <p className='text-sm text-muted-foreground break-all'>
-                    <span className='font-medium text-foreground'>RTSP URL: </span> 
-                    {camera.rtspUrl}
-                </p>
+                <h4 className="mb-2 font-medium">Video Source</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant={videoSource === 'demo' ? 'secondary' : 'outline'} onClick={() => setVideoSource('demo')}>
+                    <Video className="mr-2 h-4 w-4" />
+                    Demo
+                  </Button>
+                  <Button variant={videoSource === 'live' ? 'secondary' : 'outline'} onClick={() => setVideoSource('live')} disabled={!hasLiveFeed}>
+                     <Camera className="mr-2 h-4 w-4" />
+                    Live
+                  </Button>
+                </div>
               </div>
               <Separator />
                <div>

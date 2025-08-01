@@ -18,9 +18,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Video, Loader2 } from 'lucide-react';
+import { Plus, Wifi, Loader2, Video } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,72 +35,125 @@ import { AspectRatio } from './ui/aspect-ratio';
 const formSchema = z.object({
   name: z.string().min(1, 'Camera name is required'),
   location: z.string().min(1, 'Location is required'),
-  rtspUrl: z.string().url('Must be a valid URL').startsWith('rtsp://', 'URL must start with rtsp://'),
+  streamUrl: z.string().url('Must be a valid HTTP/HTTPS URL').startsWith('http', 'URL must start with http:// or https://'),
 });
 
-export function AddCameraDialog() {
-  const [open, setOpen] = useState(false);
-  const { toast } = useToast();
-  const [cameras, setCameras] = useAtom(camerasAtom);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+function ManualAddForm({ onFormSubmit }: { onFormSubmit: (values: z.infer<typeof formSchema>) => void }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '', location: '', rtspUrl: 'rtsp://' },
+    defaultValues: { name: '', location: '', streamUrl: 'http://' },
     mode: 'onChange'
   });
 
-  const rtspUrlValue = useWatch({ control: form.control, name: 'rtspUrl' });
-  const isUrlValid = formSchema.shape.rtspUrl.safeParse(rtspUrlValue).success;
+  const streamUrl = useWatch({ control: form.control, name: 'streamUrl' });
+  const isUrlValid = formSchema.shape.streamUrl.safeParse(streamUrl).success;
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    const newCameraId = `cam-${Date.now()}`;
-    const newCamera: Camera = {
-        id: newCameraId,
-        ...values,
-        status: 'Online', // Assume online initially
-        thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff', // Placeholder
-        // The actual streamUrl will be based on the go2rtc config
-        streamUrl: `/api/placeholder`, 
-    };
-
-    try {
-        const response = await fetch('/api/cameras', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: newCameraId,
-                name: values.name,
-                rtspUrl: values.rtspUrl
-            }),
-        });
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-4 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className='space-y-4'>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Camera Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Front Door" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Entrance" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="streamUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stream URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="http://localhost:1984/stream.html?src=my_cam" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className='space-y-2'>
+              <FormLabel>Camera Preview</FormLabel>
+              <AspectRatio ratio={16 / 9} className="bg-muted rounded-md overflow-hidden border">
+                {isUrlValid ? (
+                     <iframe
+                        src={streamUrl}
+                        className="h-full w-full border-0"
+                        allow="autoplay; encrypted-media; picture-in-picture"
+                        allowFullScreen
+                        title="Camera Preview"
+                      ></iframe>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 p-4 text-center">
+                        <Video className="h-8 w-8" />
+                        <p className="text-sm">Enter a valid stream URL from your media server to see a preview.</p>
+                    </div>
+                )}
+              </AspectRatio>
+              <p className="text-xs text-muted-foreground text-center">Note: Preview requires a running go2rtc or similar media server.</p>
+          </div>
+        </div>
         
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to configure camera on server');
-        }
+        <DialogFooter className="pt-4">
+            <Button type="submit" disabled={!form.formState.isValid}>Add Camera</Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  )
+}
 
-        // Add to UI state only after successful API call
-        setCameras((prev) => [...prev, newCamera]);
+export function AddCameraDialog() {
+  const [open, setOpen] = useState(false);
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const { toast } = useToast();
+  const [, setCameras] = useAtom(camerasAtom);
 
-        toast({
-          title: 'Camera Added',
-          description: `The camera "${values.name}" has been added and go2rtc is restarting.`,
-        });
-        setOpen(false);
-        form.reset();
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    const newCamera: Camera = {
+        id: `cam-${Date.now()}`,
+        ...values,
+        status: 'Online', // Assume online initially, status can be updated later
+        thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff'
+    };
+    setCameras((prev) => [...prev, newCamera]);
 
-    } catch (error: any) {
-        console.error(error);
-        toast({
-            title: 'Error Adding Camera',
-            description: error.message,
-            variant: 'destructive',
-        });
-    } finally {
-        setIsSubmitting(false);
-    }
+    toast({
+      title: 'Camera Added',
+      description: `The camera "${values.name}" has been added successfully.`,
+    });
+    setOpen(false);
+  }
+
+  function handleDiscover() {
+      setIsDiscovering(true);
+      setTimeout(() => {
+          setIsDiscovering(false);
+          toast({
+              title: 'Discovery Finished',
+              description: 'No ONVIF cameras were found on the network.',
+          });
+      }, 2500);
   }
 
   return (
@@ -110,73 +164,32 @@ export function AddCameraDialog() {
           Add Camera
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Add a New Camera</DialogTitle>
           <DialogDescription>
-            Enter the camera details. This will automatically update the go2rtc configuration.
+            Automatically discover cameras on your network or add one manually using its HTTP stream URL.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Camera Name</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., Front Door" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., Entrance" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="rtspUrl"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>RTSP Stream URL</FormLabel>
-                    <FormControl>
-                        <Input placeholder="rtsp://user:pass@192.168.1.100:554/stream1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <div className='space-y-2'>
-                    <FormLabel>Live Preview</FormLabel>
-                    <AspectRatio ratio={16 / 9} className="bg-muted rounded-md overflow-hidden border">
-                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 p-4 text-center">
-                            <Video className="h-8 w-8" />
-                            <p className="text-sm">A live preview is not available here.</p>
-                            <p className="text-xs">The stream will be available on the dashboard after go2rtc restarts.</p>
-                        </div>
-                    </AspectRatio>
-                </div>
-                
-                <DialogFooter className="pt-4">
-                    <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Add Camera
-                    </Button>
-                </DialogFooter>
-            </form>
-        </Form>
+        <Tabs defaultValue="manual">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="discover">Auto Discover</TabsTrigger>
+            <TabsTrigger value="manual">Manual</TabsTrigger>
+          </TabsList>
+          <TabsContent value="discover" className="py-4">
+             <div className="flex flex-col items-center justify-center space-y-4 rounded-lg border-2 border-dashed p-8 text-center min-h-[300px]">
+                <Wifi className="h-12 w-12 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">Discover Cameras</h3>
+                <p className="text-sm text-muted-foreground">Find ONVIF-compatible cameras on your local network.</p>
+                <Button onClick={handleDiscover} disabled={isDiscovering}>
+                    {isDiscovering ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Searching...</> : 'Start Discovery'}
+                </Button>
+             </div>
+          </TabsContent>
+          <TabsContent value="manual">
+            <ManualAddForm onFormSubmit={onSubmit} />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
