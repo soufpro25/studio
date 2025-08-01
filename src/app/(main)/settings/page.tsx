@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, Trash2, LayoutGrid, Users } from 'lucide-react';
+import { MoreVertical, Trash2, LayoutGrid, Users, Server } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AddCameraDialog } from '@/components/add-camera-dialog';
 import {
@@ -23,12 +23,43 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const [cameras, setCameras] = useAtom(camerasAtom);
+  const { toast } = useToast();
 
-  const removeCamera = (id: string) => {
+  const removeCamera = async (id: string) => {
+    // Optimistically update UI
+    const originalCameras = cameras;
     setCameras((prev) => prev.filter((c) => c.id !== id));
+
+    try {
+      const response = await fetch('/api/cameras', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete camera on server');
+      }
+
+      toast({
+        title: 'Camera Removed',
+        description: 'The camera has been removed from your configuration.',
+      });
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove the camera. Restoring previous state.',
+        variant: 'destructive',
+      });
+      // Rollback UI on failure
+      setCameras(originalCameras);
+    }
   };
 
   return (
@@ -43,31 +74,25 @@ export default function SettingsPage() {
             <CardTitle>System</CardTitle>
             <CardDescription>Manage general system settings and configurations.</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-md border p-4 flex items-center justify-between">
+          <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <Link href="/settings/layouts" className="rounded-md border p-4 flex items-center justify-between hover:bg-accent transition-colors">
                 <div>
-                  <h3 className="font-medium">Dashboard Layouts</h3>
-                  <p className="text-sm text-muted-foreground">Create and manage your custom dashboard layouts.</p>
+                  <h3 className="font-medium flex items-center gap-2"><LayoutGrid className="h-5 w-5" />Dashboard Layouts</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Customize your dashboard grid layouts.</p>
                 </div>
-                 <Button asChild>
-                    <Link href="/settings/layouts">
-                        <LayoutGrid className="mr-2 h-4 w-4" />
-                        Manage Layouts
-                    </Link>
-                 </Button>
-              </div>
-              <div className="rounded-md border p-4 flex items-center justify-between">
+              </Link>
+              <Link href="/settings/users" className="rounded-md border p-4 flex items-center justify-between hover:bg-accent transition-colors">
                 <div>
-                  <h3 className="font-medium">User Management</h3>
-                  <p className="text-sm text-muted-foreground">Manage user accounts and their permissions.</p>
+                  <h3 className="font-medium flex items-center gap-2"><Users className="h-5 w-5" />User Management</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Manage user accounts and permissions.</p>
                 </div>
-                 <Button asChild>
-                    <Link href="/settings/users">
-                        <Users className="mr-2 h-4 w-4" />
-                        Manage Users
-                    </Link>
-                 </Button>
-              </div>
+              </Link>
+               <Link href="/settings/system" className="rounded-md border p-4 flex items-center justify-between hover:bg-accent transition-colors">
+                <div>
+                  <h3 className="font-medium flex items-center gap-2"><Server className="h-5 w-5" />System Control</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Manage and restart system services.</p>
+                </div>
+              </Link>
           </CardContent>
       </Card>
 
@@ -87,7 +112,7 @@ export default function SettingsPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Stream URL</TableHead>
+                  <TableHead>RTSP Stream</TableHead>
                   <TableHead className="w-[50px]"><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
               </TableHeader>
@@ -102,7 +127,7 @@ export default function SettingsPage() {
                           {camera.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-sm text-muted-foreground">{camera.streamUrl}</TableCell>
+                      <TableCell className="font-mono text-sm text-muted-foreground">{camera.rtspUrl}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                            <DropdownMenuTrigger asChild>
