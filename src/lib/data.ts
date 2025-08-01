@@ -45,7 +45,7 @@ export const initialCameras: Camera[] = [
     location: 'Entrance',
     status: 'Online',
     thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: 'http://<YOUR_SERVER_IP>:1984/stream.html?src=front_door',
+    streamUrl: 'http://localhost:1984/stream.html?src=front_door',
   },
   {
     id: 'cam-002',
@@ -53,7 +53,7 @@ export const initialCameras: Camera[] = [
     location: 'Exterior',
     status: 'Online',
     thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
-    streamUrl: 'http://<YOUR_SERVER_IP>:1984/stream.html?src=backyard',
+    streamUrl: 'http://localhost:1984/stream.html?src=backyard',
   },
   {
     id: 'cam-003',

@@ -86,7 +86,7 @@ function ManualAddForm({ onFormSubmit }: { onFormSubmit: (values: z.infer<typeof
                 <FormItem>
                   <FormLabel>Stream URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="http://192.168.1.50:1984/stream.html?src=my_cam" {...field} />
+                    <Input placeholder="http://localhost:1984/stream.html?src=my_cam" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -165,13 +165,13 @@ export function AddCameraDialog() {
             Automatically discover cameras on your network or add one manually.
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="discover">
+        <Tabs defaultValue="manual">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="discover">Auto Discover</TabsTrigger>
             <TabsTrigger value="manual">Manual</TabsTrigger>
           </TabsList>
           <TabsContent value="discover" className="py-4">
-             <div className="flex flex-col items-center justify-center space-y-4 rounded-lg border-2 border-dashed p-8 text-center min-h-[300px]">
+             <div className="flex flex-col items-center justify-center space-y-4 rounded-lg border-2 border--dashed p-8 text-center min-h-[300px]">
                 <Wifi className="h-12 w-12 text-muted-foreground" />
                 <h3 className="text-lg font-semibold">Discover Cameras</h3>
                 <p className="text-sm text-muted-foreground">Find ONVIF-compatible cameras on your local network.</p>
