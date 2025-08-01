@@ -58,10 +58,9 @@ export function AddCameraDialog() {
       name: values.name,
       location: values.location,
       rtspUrl: values.rtspUrl,
-      // The streamUrl is the final go2rtc HTTP stream URL
-      streamUrl: `http://192.168.74.129:1984/stream.html?src=${streamKey}`,
+      streamUrl: `http://${window.location.hostname}:1984/stream.html?src=${streamKey}`,
       status: 'Online',
-      thumbnailUrl: 'https://placehold.co/600x400/2c3e50/ffffff',
+      thumbnailUrl: `https://placehold.co/600x400?text=${values.name.replace(/\s/g, '+')}`,
     };
 
     try {
@@ -81,7 +80,6 @@ export function AddCameraDialog() {
         throw new Error(result.error || 'Failed to add camera on the server.');
       }
       
-      // Update UI state only on successful API call
       setCameras((prev) => [...prev, newCamera]);
 
       toast({

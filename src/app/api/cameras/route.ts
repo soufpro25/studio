@@ -1,7 +1,6 @@
 
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
-import yaml from 'js-yaml';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -9,48 +8,24 @@ const execAsync = promisify(exec);
 
 const GO2RTC_CONFIG_PATH = '/root/AegisView/studio/go2rtc.yaml';
 
-interface Go2RtcConfig {
-    streams: {
-        [key: string]: string | { url: string };
-    };
-    api?: {
-        listen: string;
-    }
-}
-
-async function readGo2RtcConfig(): Promise<Go2RtcConfig> {
+async function getGo2RtcConfig() {
     try {
-        const file = await fs.readFile(GO2RTC_CONFIG_PATH, 'utf-8');
-        // If file is empty or just whitespace, yaml.load returns undefined
-        const config = yaml.load(file) as Go2RtcConfig;
-        return config || { streams: {} };
-    } catch (error: any) {
-        if (error.code === 'ENOENT') {
-            // File doesn't exist, return a default config structure
-            return { streams: {}, api: { listen: ':1984' } };
-        }
-        // For other errors, log it and return a safe default
-        console.error('Error reading go2rtc config, returning default:', error);
-        return { streams: {}, api: { listen: ':1984' } };
+        await fs.access(GO2RTC_CONFIG_PATH);
+        return await fs.readFile(GO2RTC_CONFIG_PATH, 'utf-8');
+    } catch (error) {
+        // If file doesn't exist, create it with a default structure
+        const defaultConfig = `streams:\n\napi:\n  listen: ":1984"\n`;
+        await fs.writeFile(GO2RTC_CONFIG_PATH, defaultConfig, 'utf-8');
+        return defaultConfig;
     }
 }
 
-async function writeGo2RtcConfig(config: Go2RtcConfig) {
-    // Ensure the api listen port is always set, as go2rtc might remove it
-    if (!config.api) {
-        config.api = { listen: ':1984' };
-    } else if (!config.api.listen) {
-        config.api.listen = ':1984';
-    }
-
-    const yamlString = yaml.dump(config, { indent: 2 });
-    await fs.writeFile(GO2RTC_CONFIG_PATH, yamlString, 'utf-8');
+async function writeGo2RtcConfig(content: string) {
+    await fs.writeFile(GO2RTC_CONFIG_PATH, content, 'utf-8');
 }
 
 async function restartGo2Rtc() {
     try {
-        // Important: Using sudo requires passwordless configuration for this specific command.
-        // Add to sudoers: `root ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart go2rtc.service`
         await execAsync('sudo systemctl restart go2rtc.service');
     } catch (error) {
         console.error('Failed to restart go2rtc service:', error);
@@ -60,23 +35,36 @@ async function restartGo2Rtc() {
 
 export async function POST(request: Request) {
     try {
-        const { id, name, rtspUrl } = await request.json();
+        const { id, rtspUrl } = await request.json();
 
-        if (!id || !name || !rtspUrl) {
+        if (!id || !rtspUrl) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
-
-        const config = await readGo2RtcConfig();
         
-        // Use a simple sanitized name for the stream key
         const streamKey = id.replace(/[^a-zA-Z0-9]/g, '');
 
-        if (!config.streams) {
-            config.streams = {};
-        }
-        config.streams[streamKey] = rtspUrl;
+        let configContent = await getGo2RtcConfig();
+        
+        const streamLine = `  ${streamKey}: ${rtspUrl}\n`;
 
-        await writeGo2RtcConfig(config);
+        // Check if streams section exists
+        if (!configContent.includes('streams:')) {
+            configContent = 'streams:\n' + configContent;
+        }
+
+        // Add the new stream line
+        const lines = configContent.split('\n');
+        const streamsIndex = lines.findIndex(line => line.trim().startsWith('streams:'));
+        
+        // Check if stream already exists to avoid duplicates
+        const streamExists = lines.some(line => line.trim().startsWith(`${streamKey}:`));
+
+        if (!streamExists) {
+          lines.splice(streamsIndex + 1, 0, streamLine);
+          configContent = lines.join('\n');
+          await writeGo2RtcConfig(configContent);
+        }
+
         await restartGo2Rtc();
 
         return NextResponse.json({ message: 'Camera added and go2rtc configured successfully.' });
@@ -95,20 +83,21 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: 'Missing camera ID' }, { status: 400 });
         }
 
-        const config = await readGo2RtcConfig();
-        
         const streamKey = id.replace(/[^a-zA-Z0-9]/g, '');
-
-        if (config.streams && config.streams[streamKey]) {
-            delete config.streams[streamKey];
-            await writeGo2RtcConfig(config);
-            await restartGo2Rtc();
+        let configContent = await getGo2RtcConfig();
+        
+        const lines = configContent.split('\n');
+        const updatedLines = lines.filter(line => !line.trim().startsWith(`${streamKey}:`));
+        
+        if (lines.length !== updatedLines.length) {
+          configContent = updatedLines.join('\n');
+          await writeGo2RtcConfig(configContent);
+          await restartGo2Rtc();
         }
 
         return NextResponse.json({ message: 'Camera removed and go2rtc reconfigured.' });
 
-    } catch (error: any)
-    {
+    } catch (error: any) {
         console.error('API DELETE Error:', error);
         return NextResponse.json({ error: error.message || 'An internal server error occurred.' }, { status: 500 });
     }
