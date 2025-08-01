@@ -21,8 +21,7 @@ export default function CameraDetailPage({ params }: { params: Promise<{ id: str
   const [cameras] = useAtom(camerasAtom);
   const camera = cameras.find((c) => c.id === id);
   
-  // Default to live if a valid streamUrl exists, otherwise demo
-  const [videoSource, setVideoSource] = useState<VideoSource>(camera?.streamUrl ? 'live' : 'demo');
+  const [videoSource, setVideoSource] = useState<VideoSource>('live');
   const { toast } = useToast();
 
   if (!camera) {
